@@ -43,6 +43,7 @@ from pathlib import Path
 import joblib
 
 from app.core.exceptions import InvalidScanInputError
+from app.core.url_validation import has_scheme
 from app.engines.ml.url_features import build_matrix, char_model_text, feature_frame, mask_tld_in_text
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]  # ml -> engines -> app -> backend -> root
@@ -62,7 +63,7 @@ def ensure_scheme(url: str) -> str:
     and the saved evaluation scores are untouched.
     """
     raw = url.strip()
-    return raw if "://" in raw else "https://" + raw
+    return raw if has_scheme(raw) else "https://" + raw
 
 
 def _load_artifact() -> dict:

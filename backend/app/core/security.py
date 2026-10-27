@@ -1,40 +1,85 @@
 """
 security.py
 
-Minimal API-key gate for publicly hosted ETIS endpoints. Deliberately not
-JWT/RBAC -- that scope was cut at the group-proposal stage (see
-Group_Project_Proposal, section 3.3) and a single-operator manual-scan demo
-doesn't need session-based auth. This exists purely so a hosted /analyze
-endpoint isn't wide open.
+Who is calling, and are they allowed to. Replaces the single shared
+ETIS_API_KEY (2026-10-26), which the dashboard had to carry inside its
+public JavaScript, where anyone could read it.
 
-A missing or wrong key raises AuthenticationError, which the global handler
-in main.py maps to HTTP 401 (not 400 -- the request is well-formed, it just
-isn't authenticated).
+Two kinds of caller, each with its own credential:
+
+    dashboard (browser)  signed session cookie (app/core/sessions.py), issued
+                         by POST /session after a Cloudflare Turnstile bot
+                         check; HttpOnly, short-lived, nothing secret in the page
+    programs             per-client API key in the X-API-Key header
+                         (app/core/api_keys.py), hashed in the database,
+                         revocable one client at a time
+
+With ETIS_AUTH_REQUIRED=false (the default, local development) every request
+is let through as an anonymous caller, keyed by IP for the rate limit, and
+API keys are not looked up at all.
+
+The Caller is stored on request.state so the rate limiter can key the
+per-caller limit on it (app/core/rate_limit.py).
+
+Errors: a wrong or revoked API key -> AuthenticationError (401); no
+credentials -> SessionRequiredError (401, "start a session and retry"). Both
+are mapped in main.py.
 """
 
-import os
-import secrets
+from dataclasses import dataclass
 
-from fastapi import Header
+from fastapi import Depends, Header, Request
+from sqlalchemy.orm import Session
 
-from app.core.exceptions import AuthenticationError
+from app.core.api_keys import find_active_client
+from app.core.config import settings
+from app.core.database import get_db_session
+from app.core.exceptions import AuthenticationError, SessionRequiredError
+from app.core.sessions import SESSION_COOKIE_NAME, verify_session_token
 
-EXPECTED_API_KEY = os.getenv("ETIS_API_KEY")
+# Module-level copies (not read from settings on every call) so tests can
+# monkeypatch them; see tests/test_security.py.
+AUTH_REQUIRED = settings.auth_required
+SESSION_SECRET = settings.session_secret
 
 
-def verify_api_key(x_api_key: str = Header(default=None)) -> None:
-    """FastAPI dependency: raises AuthenticationError if the request's
-    X-API-Key header doesn't match ETIS_API_KEY from the environment. If
-    ETIS_API_KEY isn't set at all (local dev), the check is skipped entirely
-    -- so local development never needs a key, only a real deployment with
-    the env var set.
+@dataclass(frozen=True)
+class Caller:
+    kind: str  # "client", "session" or "anonymous"
+    identifier: str  # client name, session id, or IP address
 
-    The comparison is constant-time (secrets.compare_digest on bytes, which
-    also avoids a TypeError on non-ASCII header values) so response timing
-    can't leak how much of a guessed key was correct."""
-    if EXPECTED_API_KEY is None:
-        return
-    if x_api_key is None or not secrets.compare_digest(
-        x_api_key.encode("utf-8"), EXPECTED_API_KEY.encode("utf-8")
-    ):
-        raise AuthenticationError("Missing or invalid API key.")
+    @property
+    def rate_limit_key(self) -> str:
+        return f"{self.kind}:{self.identifier}"
+
+
+def client_ip(request: Request) -> str:
+    # request.client is the direct peer. Behind a reverse proxy, run uvicorn
+    # with --proxy-headers --forwarded-allow-ips=<proxy IP> so this is the
+    # real client and not the proxy (see SETUP.md, deployment).
+    return request.client.host if request.client else "unknown"
+
+
+def require_caller(
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+    db: Session = Depends(get_db_session),
+) -> Caller:
+    """FastAPI dependency for every data endpoint (/analyze, /threats, /stats)."""
+    if not AUTH_REQUIRED:
+        caller = Caller("anonymous", client_ip(request))
+    elif x_api_key is not None:
+        # A key that is sent must be valid: falling back to the cookie would
+        # hide a revoked or mistyped key from the program that uses it.
+        client = find_active_client(db, x_api_key)
+        if client is None:
+            raise AuthenticationError("Invalid or revoked API key.")
+        caller = Caller("client", client.name)
+    else:
+        session = verify_session_token(SESSION_SECRET, request.cookies.get(SESSION_COOKIE_NAME))
+        if session is None:
+            raise SessionRequiredError("No valid session. Start one with POST /session.")
+        caller = Caller("session", session.session_id)
+
+    request.state.caller = caller
+    return caller

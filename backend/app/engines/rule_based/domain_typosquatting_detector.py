@@ -95,6 +95,7 @@ from urllib.parse import unquote, urlsplit
 
 from app.core.egyptian_brands import EGYPTIAN_BRAND_ALIAS_LABELS, EGYPTIAN_BRAND_DOMAINS
 from app.core.exceptions import InvalidScanInputError
+from app.core.url_validation import has_scheme
 
 
 MIN_DOMAIN_LENGTH_FOR_LEVENSHTEIN = 9
@@ -160,7 +161,7 @@ def _split_url(url_or_domain: str):
     Returns a SplitResult, or None if the string cannot be parsed at all
     (e.g. an unterminated IPv6 literal)."""
     text = _REMOVED_URL_CHARS.sub("", url_or_domain.strip()).replace("\\", "/")
-    if "://" not in text:
+    if not has_scheme(text):  # a "://" later in a scheme-less URL is not a scheme
         text = "http://" + text
     try:
         return urlsplit(text)

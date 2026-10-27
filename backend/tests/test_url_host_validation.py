@@ -50,10 +50,26 @@ def test_analyze_endpoint_returns_400_for_hostless_url(monkeypatch):
 
     from app.main import app
 
-    # Make the test independent of any ETIS_API_KEY set in the developer's shell.
-    monkeypatch.delenv("ETIS_API_KEY", raising=False)
-    monkeypatch.setattr("app.core.security.EXPECTED_API_KEY", None, raising=False)
+    # Make the test independent of ETIS_AUTH_REQUIRED in the developer's shell or .env.
+    monkeypatch.setattr("app.core.security.AUTH_REQUIRED", False)
 
     response = TestClient(app).post("/analyze", json={"url": "https://"})
     assert response.status_code == 400
     assert response.json()["error"] == "InvalidScanInputError"
+
+
+@pytest.mark.parametrize("url", [
+    "l.wl.co/l?u=https://qr-codes.io/x",
+    "example.com/redirect?to=http://other.org",
+])
+def test_scheme_less_url_with_a_later_scheme_has_a_host(url):
+    ensure_url_has_host(url)  # must not raise
+
+
+
+def test_scorer_accepts_scheme_less_redirect_url(db):
+    result = calculate_final_risk_score(url="l.wl.co/l?u=https://qr-codes.io/x", db=db)
+    rule = result["engine_details"]["rule_based"]["engine_results"]
+    assert rule["domain_typosquatting"]["normalized_domain"] == "l.wl.co"
+    assert "malformed_url" not in [flag[0] for flag in rule["url_pattern"]["flags"]]
+    assert "url_model" in result["engines_applied"]

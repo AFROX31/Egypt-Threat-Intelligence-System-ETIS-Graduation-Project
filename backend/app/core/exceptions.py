@@ -28,5 +28,19 @@ class BlacklistLookupError(ETISException):
 
 
 class AuthenticationError(ETISException):
-    """Raised when a request's API key is missing or invalid
-    (mapped to HTTP 401 in main.py)."""
+    """Raised when a request's API key is invalid or revoked, or it has no
+    credentials at all (mapped to HTTP 401 in main.py)."""
+
+class SessionRequiredError(AuthenticationError):
+    """Raised when a browser request has no valid session cookie. The
+    dashboard reacts by starting a session (POST /session) and retrying."""
+
+
+class BotCheckFailedError(ETISException):
+    """Raised when Cloudflare Turnstile does not confirm the bot-check token
+    sent to POST /session (mapped to HTTP 403)."""
+
+
+class BotCheckUnavailableError(ETISException):
+    """Raised when Cloudflare Turnstile cannot be reached to check a token
+    (mapped to HTTP 503)."""

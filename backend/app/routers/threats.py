@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db_session
-from app.core.security import verify_api_key
+from app.core.security import require_caller
 from app.models.blacklist import BlacklistEntry
 
 router = APIRouter(prefix="/threats", tags=["threats"])
@@ -44,8 +44,10 @@ class ThreatsResponse(BaseModel):
     results: list[ThreatEntry]
 
 
-@router.get("", response_model=ThreatsResponse, dependencies=[Depends(verify_api_key)])
-async def list_threats(
+# Plain `def`, not `async def`: SQLAlchemy calls block, so FastAPI must run
+# this in its thread pool rather than on the event loop.
+@router.get("", response_model=ThreatsResponse, dependencies=[Depends(require_caller)])
+def list_threats(
     source: Optional[str] = Query(default=None, description="Filter by source: phishtank, openphish, manual"),
     is_active: Optional[bool] = Query(default=None, description="Filter by active status"),
     limit: int = Query(default=50, ge=1, le=500),

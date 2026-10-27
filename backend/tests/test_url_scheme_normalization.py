@@ -12,6 +12,8 @@ from app.engines.ml.url_model_inference import calculate_url_model_score, ensure
     ("https://example.com", "https://example.com"),
     ("HTTPS://EXAMPLE.COM", "HTTPS://EXAMPLE.COM"),
     ("ftp://example.com/file", "ftp://example.com/file"),
+    # "://" later in the URL is not a scheme (a scheme-less redirect link).
+    ("l.wl.co/l?u=https://qr-codes.io/x", "https://l.wl.co/l?u=https://qr-codes.io/x"),
 ])
 def test_ensure_scheme(given, expected):
     assert ensure_scheme(given) == expected

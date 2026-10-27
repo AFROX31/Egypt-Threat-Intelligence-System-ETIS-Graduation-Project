@@ -17,7 +17,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db_session
-from app.core.security import verify_api_key
+from app.core.security import require_caller
 from app.models.blacklist import BlacklistEntry
 from app.models.scan import ScanResult
 
@@ -65,8 +65,10 @@ def _scan_stats(db: Session) -> dict:
     }
 
 
-@router.get("", dependencies=[Depends(verify_api_key)])
-async def get_stats(db: Session = Depends(get_db_session)) -> dict:
+# Plain `def`, not `async def`: SQLAlchemy calls block, so FastAPI must run
+# this in its thread pool rather than on the event loop.
+@router.get("", dependencies=[Depends(require_caller)])
+def get_stats(db: Session = Depends(get_db_session)) -> dict:
     """Summary numbers for the dashboard: blacklist size and scan history."""
     return {
         "blacklist": _blacklist_stats(db),

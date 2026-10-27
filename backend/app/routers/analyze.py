@@ -15,22 +15,34 @@ problem is a worse failure mode than losing history -- the response's
 `saved` / `save_error` fields tell the caller whether the scan was
 recorded, so the dashboard can offer a retry without discarding the score
 the user already has in front of them.
+
+Hardening (2026-10-26):
+- Input limits: `text` and `url` have maximum lengths (ETIS_MAX_TEXT_CHARS,
+  ETIS_MAX_URL_CHARS in app/core/config.py), must be strings, and must not
+  contain NUL characters (PostgreSQL text columns reject them, which used to
+  surface as saved=false). Any validation failure is a 400 with the same
+  {"error", "detail"} shape as the other errors (handler in main.py).
+- Links inside the text are extracted and scanned (app/engines/submission.py):
+  see scanned_url, url_source, additional_links in the response.
+- The route is a plain `def`, not `async def`: the scorer, the ML models and
+  SQLAlchemy are all blocking, and FastAPI runs a plain `def` route in its
+  thread pool instead of on the event loop. As `async def`, one slow scan
+  stalled every other request, /threats and /stats included.
 """
 
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db_session
-from app.core.security import verify_api_key
-from app.engines.risk_scoring import calculate_final_risk_score
+from app.core.rate_limit import ANALYZE_IP_RATE_LIMIT, ANALYZE_RATE_LIMIT, caller_key, limiter
+from app.core.security import require_caller
+from app.engines.submission import analyze_submission
 from app.models.scan import ScanRequest, ScanResult
-
-from fastapi import Request
-from app.core.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +50,38 @@ router = APIRouter(prefix="/analyze", tags=["analyze"])
 
 
 class AnalyzeRequest(BaseModel):
+    # strict: a number or a list is rejected instead of being coerced to a string.
+    model_config = ConfigDict(strict=True)
+
     text: Optional[str] = Field(
-        default=None, description="Email or message body to analyze."
+        default=None,
+        max_length=settings.max_text_chars,
+        description=(
+            "Email or message body to analyze. Links inside it are extracted "
+            "and scanned as well."
+        ),
     )
     url: Optional[str] = Field(
-        default=None, description="URL to analyze."
+        default=None,
+        max_length=settings.max_url_chars,
+        description="URL to analyze.",
     )
+
+    @field_validator("text", "url")
+    @classmethod
+    def reject_nul_characters(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and "\x00" in value:
+            raise ValueError("must not contain NUL (\\x00) characters")
+        return value
+
+
+class AdditionalLink(BaseModel):
+    url: str = Field(description="A link found in the text, other than scanned_url.")
+    verdict: str = Field(description="This link's own verdict, scanned as a URL-only submission.")
+    final_score: float
+    decided_by: Optional[str] = None
+    engine_tiers: dict[str, str]
+    allowlisted: bool
 
 
 class SkipReasons(BaseModel):
@@ -175,6 +213,29 @@ class AnalyzeResponse(BaseModel):
             "engine_details still shows each engine's real, un-overridden output."
         ),
     )
+    scanned_url: Optional[str] = Field(
+        default=None,
+        description=(
+            "The URL the URL engines analysed in the main scan: the submitted "
+            "url, or else the first link found in the text. Null when neither exists."
+        ),
+    )
+    url_source: Optional[str] = Field(
+        default=None,
+        description="'submitted', 'extracted_from_text', or null when scanned_url is null.",
+    )
+    additional_links: list[AdditionalLink] = Field(
+        default_factory=list,
+        description=(
+            "Other links found in the text, each scanned on its own. If one "
+            "reaches a higher tier than the main scan, it sets final_score and "
+            "verdict, and decided_by is 'additional_link'."
+        ),
+    )
+    additional_links_skipped: int = Field(
+        default=0,
+        description="Links found in the text beyond ETIS_MAX_EMBEDDED_LINKS, not scanned.",
+    )
     saved: bool = Field(
         description="Whether this scan was successfully saved to history."
     )
@@ -184,9 +245,10 @@ class AnalyzeResponse(BaseModel):
     )
 
 
-@router.post("", response_model=AnalyzeResponse, dependencies=[Depends(verify_api_key)])
-@limiter.limit("20/minute")
-async def analyze(
+@router.post("", response_model=AnalyzeResponse, dependencies=[Depends(require_caller)])
+@limiter.limit(ANALYZE_RATE_LIMIT, key_func=caller_key)
+@limiter.limit(ANALYZE_IP_RATE_LIMIT)
+def analyze(
     request: Request,
     payload: AnalyzeRequest,
     db: Session = Depends(get_db_session),
@@ -198,10 +260,17 @@ async def analyze(
     saving fails, `saved` is false and `save_error` explains why; the
     caller can resubmit the same request to attempt saving again.
     """
-    result = calculate_final_risk_score(text=payload.text, url=payload.url, db=db)
+    result = analyze_submission(
+        text=payload.text,
+        url=payload.url,
+        db=db,
+        max_links=settings.max_embedded_links,
+    )
 
     try:
-        scan_request = ScanRequest(url_value=payload.url, text_value=payload.text)
+        # url_value is the URL that was actually scanned, which may have
+        # come from the text rather than the url field.
+        scan_request = ScanRequest(url_value=result["scanned_url"], text_value=payload.text)
         db.add(scan_request)
         db.flush()  # populate scan_request.id before creating the linked ScanResult
 
@@ -220,7 +289,10 @@ async def analyze(
             lstm_score=None,
             final_score=result["final_score"],
             verdict=result["verdict"],
-            engine_breakdown=result["engine_details"],
+            engine_breakdown={
+                **result["engine_details"],
+                "additional_links": result["additional_links"],
+            },
         )
         db.add(scan_result)
         db.commit()

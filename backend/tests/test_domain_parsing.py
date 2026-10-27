@@ -126,3 +126,9 @@ def test_backslash_inside_path_is_not_flagged():
     # never HIGH.
     assert result["technique"] != "backslash_embedding"
     assert result["score"] < 90.0
+
+
+def test_scheme_less_redirect_url_keeps_its_host():
+    from app.engines.rule_based.domain_typosquatting_detector import normalize_domain
+
+    assert normalize_domain("l.wl.co/l?u=https://qr-codes.io/x") == "l.wl.co"

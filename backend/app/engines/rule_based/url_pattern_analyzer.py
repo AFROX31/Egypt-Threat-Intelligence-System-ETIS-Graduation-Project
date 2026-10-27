@@ -13,6 +13,7 @@ Phase 1) -- all of which were bit.ly links.
 import re
 from urllib.parse import urlparse
 from app.core.exceptions import InvalidScanInputError
+from app.core.url_validation import has_scheme
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +71,7 @@ def calculate_url_pattern_score(url: str) -> dict:
     # urlparse needs a scheme to correctly split netloc from path; add one if
     # missing. That added scheme is a PARSING aid only: it must never be reported
     # as the user's scheme (see no_https below).
-    parsed_input = raw if "://" in raw else f"http://{raw}"
+    parsed_input = raw if has_scheme(raw) else f"http://{raw}"
     try:
         parsed = urlparse(parsed_input)
         hostname = parsed.hostname or ""
