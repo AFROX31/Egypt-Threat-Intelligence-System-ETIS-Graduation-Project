@@ -9,6 +9,7 @@ import {
   Alert,
   Stack,
   Chip,
+  Paper,
 } from '@mui/material';
 import FactCheckOutlined from '@mui/icons-material/FactCheckOutlined';
 import StorageOutlined from '@mui/icons-material/StorageOutlined';
@@ -17,12 +18,14 @@ import LinkOutlined from '@mui/icons-material/LinkOutlined';
 
 import { analyzeScan, ApiError } from '../api/client';
 import { LocalizedError } from '../api/errorMessage';
-import type { AnalyzeResponse, BlacklistDomainMatch, BlacklistExactMatch, SkipReasonCode } from '../api/types';
+import type { AdditionalLink, AnalyzeResponse, BlacklistDomainMatch, BlacklistExactMatch, SkipReasonCode } from '../api/types';
 import { VerdictCard } from '../components/VerdictCard';
 import { EngineBreakdownCard } from '../components/EngineBreakdownCard';
 import { ModelScoreSummary } from '../components/ModelScoreSummary';
 import { AutoResizingTextArea } from '../components/AutoResizingTextArea';
 import { ErrorAlert } from '../components/ErrorAlert';
+import { AdviceCard } from '../components/AdviceCard';
+import { VERDICT_STYLE } from '../theme/verdictPalette';
 
 // Matches the first http(s) URL substring in free text. Used so a
 // text-only paste (no URL entered separately) can still reach the URL
@@ -45,6 +48,21 @@ function skipReasonTranslationKey(code: SkipReasonCode | null): string | null {
   if (code === 'no_url_provided') return 'scan.skipReasonNoUrl';
   if (code === 'no_text_provided') return 'scan.skipReasonNoText';
   return null;
+}
+
+const VISUALLY_HIDDEN = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const;
+
+function verdictText(t: ReturnType<typeof useTranslation>['t'], verdict: AnalyzeResponse['verdict']) {
+  if (verdict === 'LOW') return t('scan.verdictLow');
+  if (verdict === 'MEDIUM') return t('scan.verdictMedium');
+  return t('scan.verdictHigh');
 }
 
 // Width of the input column -- also used as the hard ceiling for the
@@ -263,9 +281,20 @@ export function ScanPage() {
             variant="contained"
             fullWidth
             disabled={loading}
+            aria-busy={loading}
           >
-            {loading ? <CircularProgress size={20} /> : t('scan.submit')}
+            {loading ? (
+              <CircularProgress size={20} color="inherit" aria-label={t('common.loading')} />
+            ) : (
+              t('scan.submit')
+            )}
           </Button>
+
+          {/* Screen readers hear one short line when a scan finishes, not the
+              whole report (the report itself is not a live region). */}
+          <Box role="status" aria-live="polite" sx={VISUALLY_HIDDEN}>
+            {loading ? t('common.loading') : result ? t('scan.resultAnnouncement', { verdict: verdictText(t, result.verdict) }) : ''}
+          </Box>
 
           {error != null && <ErrorAlert error={error} sx={{ mt: 2 }} />}
 
@@ -334,6 +363,12 @@ function ScanResultView({ result }: { result: AnalyzeResponse }) {
       <Box sx={{ '& > *': { height: '100%' } }}>
         <VerdictCard result={result} />
       </Box>
+
+      <AdviceCard result={result} />
+
+      {((result.additional_links?.length ?? 0) > 0 || (result.additional_links_skipped ?? 0) > 0) && (
+        <AdditionalLinksCard links={result.additional_links ?? []} skipped={result.additional_links_skipped ?? 0} />
+      )}
 
       <EngineBreakdownCard
         icon={<FactCheckOutlined fontSize="small" color="action" />}
@@ -488,5 +523,53 @@ function ScanResultView({ result }: { result: AnalyzeResponse }) {
         {t('scan.totalTimeLabel', { ms: timings.total_ms })}
       </Typography>
     </Box>
+  );
+}
+
+/**
+ * Other links the backend found in the message text, each scanned on its
+ * own (URL-only). Full width, after the verdict and advice, because one of
+ * these can be what decided the verdict ("Decided by: another link").
+ */
+function AdditionalLinksCard({ links, skipped }: { links: AdditionalLink[]; skipped: number }) {
+  const { t } = useTranslation();
+  return (
+    <Paper
+      variant="outlined"
+      component="section"
+      aria-labelledby="additional-links-heading"
+      sx={{ p: 2, borderRadius: 3, gridColumn: '1 / -1' }}
+    >
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
+        <LinkOutlined fontSize="small" color="action" aria-hidden />
+        <Typography id="additional-links-heading" variant="subtitle2" component="h3" sx={{ fontWeight: 600 }}>
+          {t('scan.additionalLinksHeading', { count: links.length })}
+        </Typography>
+      </Stack>
+      <Stack component="ul" spacing={1} sx={{ m: 0, p: 0, listStyle: 'none' }}>
+        {links.map((link) => (
+          <Stack key={link.url} component="li" direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <Chip
+              size="small"
+              color={VERDICT_STYLE[link.verdict].chipColor}
+              label={verdictText(t, link.verdict)}
+              sx={{ fontWeight: 600, minWidth: 72 }}
+            />
+            <Typography
+              variant="body2"
+              dir="ltr"
+              sx={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.8rem', overflowWrap: 'anywhere', minWidth: 0 }}
+            >
+              {link.url}
+            </Typography>
+          </Stack>
+        ))}
+      </Stack>
+      {skipped > 0 && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+          {t('scan.additionalLinksSkipped', { count: skipped })}
+        </Typography>
+      )}
+    </Paper>
   );
 }

@@ -88,12 +88,28 @@ async function handleScanEmail(text, url) {
     };
   }
 
+  // Per-client API key, entered on the Options page and kept in
+  // chrome.storage.local (never in the code). Needed only when the backend
+  // runs with ETIS_AUTH_REQUIRED=true; create one with
+  // `py -3.13 manage_api_keys.py create gmail-extension` in backend/.
+  const { etisApiKey } = await chrome.storage.local.get("etisApiKey");
+  const headers = { "Content-Type": "application/json" };
+  if (etisApiKey) headers["X-API-Key"] = etisApiKey;
+
   const res = await fetch(`${API_BASE_URL}/analyze`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ text, url: url || undefined }),
   });
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    // Don't cache or badge an error body as if it were a verdict.
+    if (res.status === 401) {
+      throw new Error("The ETIS server refused the API key. Set a valid key on the extension's Options page.");
+    }
+    if (res.status === 429) throw new Error("Too many scans in a short time. Wait a minute and try again.");
+    throw new Error(`ETIS server error ${res.status}${data?.detail ? ": " + data.detail : ""}`);
+  }
 
   await recordScan(hash, text, data);
   setBadgeForVerdict(data.verdict);

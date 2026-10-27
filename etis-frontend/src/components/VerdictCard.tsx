@@ -42,6 +42,8 @@ function VerdictSeal({ verdict, color }: { verdict: Verdict; color: string }) {
   const { t } = useTranslation();
   return (
     <Box
+      role="img"
+      aria-label={t('scan.verdictAria', { verdict: verdictLabel(t, verdict) })}
       sx={{
         width: 76,
         height: 76,
@@ -65,6 +67,7 @@ function VerdictSeal({ verdict, color }: { verdict: Verdict; color: string }) {
         }}
       />
       <Typography
+        aria-hidden
         sx={{
           fontSize: 10,
           fontWeight: 700,
@@ -76,7 +79,7 @@ function VerdictSeal({ verdict, color }: { verdict: Verdict; color: string }) {
       >
         {verdictLabel(t, verdict)}
       </Typography>
-      <Typography sx={{ fontSize: 8, color, fontFamily: "'IBM Plex Mono', monospace", mt: 0.25 }}>
+      <Typography aria-hidden sx={{ fontSize: 8, color, fontFamily: "'IBM Plex Mono', monospace", mt: 0.25 }}>
         ETIS
       </Typography>
     </Box>
@@ -88,6 +91,7 @@ const ENGINE_LABEL_KEY: Record<string, string> = {
   blacklist: 'scan.engineBlacklist',
   url_model: 'scan.engineUrlModel',
   text_model: 'scan.engineTextModel',
+  additional_link: 'scan.engineAdditionalLink',
 };
 
 /**
@@ -155,7 +159,7 @@ export function VerdictCard({ result }: { result: AnalyzeResponse }) {
             {explainVerdict(t, result)}
           </Typography>
 
-          {decidedByKey && !result.allowlisted && (
+          {decidedByKey && (!result.allowlisted || result.decided_by === 'additional_link') && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
               {t('scan.decidedBy', { engine: t(decidedByKey) })}
             </Typography>

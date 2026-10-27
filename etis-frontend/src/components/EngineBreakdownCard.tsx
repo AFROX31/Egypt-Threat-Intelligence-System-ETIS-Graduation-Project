@@ -69,14 +69,18 @@ export function EngineBreakdownCard({
         p: 2,
         borderRadius: 3,
         height: '100%',
-        opacity: applicable ? 1 : 0.55,
+        // A skipped engine is marked by a dashed border and a tinted
+        // background rather than by fading the card: at 55% opacity the
+        // grey "did not run" text dropped to about 2.3:1 contrast.
+        borderStyle: applicable ? 'solid' : 'dashed',
+        bgcolor: applicable ? 'background.paper' : 'action.hover',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-        {icon}
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, flexGrow: 1 }}>
+        <Box component="span" aria-hidden sx={{ display: 'inline-flex' }}>{icon}</Box>
+        <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 600, flexGrow: 1 }}>
           {title}
         </Typography>
       </Stack>

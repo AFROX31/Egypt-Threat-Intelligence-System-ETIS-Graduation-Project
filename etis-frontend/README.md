@@ -2,10 +2,12 @@
 
 Vite + React + TypeScript + MUI, set up per the three decisions made for Phase 7:
 
-1. **API key wiring** — `.env.example` documents `VITE_ETIS_API_KEY`, unset locally
-   (matches the backend's `verify_api_key` no-op when `ETIS_API_KEY` is unset).
-   `VITE_API_BASE_URL` is the env var the upcoming API client will read, so
-   switching from local to hosted backend is a one-line `.env.local` change.
+1. **Authentication** — since 2026-10-26 the dashboard holds no API key (a
+   `VITE_` value is public). It gets an HttpOnly session cookie from
+   `POST /session`, after a Cloudflare Turnstile check when the backend has
+   one configured (`src/api/session.ts`, `src/api/turnstile.ts`), and retries
+   once when a call comes back `SessionRequiredError`. `VITE_API_BASE_URL` is
+   the only setting; empty means "same origin".
 2. **Arabic-first with English toggle** — `src/i18n/` (i18next, default `ar`),
    `src/theme/` (MUI theme + RTL-aware emotion cache). The `AppBar` toggle
    button flips both language and layout direction together — see
@@ -43,7 +45,7 @@ Verified before handoff: `npx tsc --noEmit` (clean) and `npm run build` (clean,
 - `types.ts` — TypeScript types mirroring the Pydantic models in
   `analyze.py` / `threats.py` / `stats.py` / `scan.py` / `blacklist.py`.
 - `client.ts` — `analyzeScan()`, `getThreats()`, `getStats()`. Reads
-  `VITE_API_BASE_URL` / `VITE_ETIS_API_KEY` from env.
+  `VITE_API_BASE_URL` from env and sends the session cookie (`credentials: 'include'`).
 
 **Two things in here are marked UNVERIFIED and need confirming against the
 real backend, not guessed:**

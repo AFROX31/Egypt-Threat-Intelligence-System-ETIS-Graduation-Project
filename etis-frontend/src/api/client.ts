@@ -5,19 +5,22 @@ import type {
   ThreatsResponse,
   StatsResponse,
 } from './types';
+import { ensureSession } from './session';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const API_KEY = import.meta.env.VITE_ETIS_API_KEY;
+// An empty VITE_API_BASE_URL means "same origin" (the backend serves the
+// built dashboard itself, ETIS_FRONTEND_DIST), so only a missing value falls
+// back to the local dev server.
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
 /**
- * Header name for verify_api_key. Checked against app/core/security.py as it
- * stood in the project files: the dependency parameter is `x_api_key`, which
- * FastAPI maps to the header `X-API-Key` (header names are case-insensitive).
- * Still NOT exercised end to end: VITE_ETIS_API_KEY is empty locally and the
- * backend skips the check when ETIS_API_KEY is unset, so no request has yet
- * been made with a key set. Do that once before the hosted deployment.
+ * Authentication (2026-10-26): the dashboard no longer carries an API key.
+ * VITE_ETIS_API_KEY put a shared secret inside the public JavaScript, where
+ * anyone could read it. The browser now holds a signed HttpOnly session
+ * cookie from POST /session (after a Turnstile bot check when enabled), sent
+ * with `credentials: 'include'`. Per-client API keys are for programs such as
+ * the Gmail extension, never for a public page. See api/session.ts and
+ * backend/app/core/security.py.
  */
-const API_KEY_HEADER_NAME = 'X-API-Key';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -34,8 +37,16 @@ export class ApiError extends Error {
 function buildHeaders(hasJsonBody: boolean): HeadersInit {
   const headers: Record<string, string> = {};
   if (hasJsonBody) headers['Content-Type'] = 'application/json';
-  if (API_KEY) headers[API_KEY_HEADER_NAME] = API_KEY;
   return headers;
+}
+
+function isSessionRequired(status: number, body: unknown): boolean {
+  return (
+    status === 401 &&
+    typeof body === 'object' &&
+    body !== null &&
+    (body as { error?: unknown }).error === 'SessionRequiredError'
+  );
 }
 
 /**
@@ -53,6 +64,7 @@ function buildHeaders(hasJsonBody: boolean): HeadersInit {
 async function request<TResponse>(
   path: string,
   options: RequestInit & { hasJsonBody?: boolean } = {},
+  isRetry = false,
 ): Promise<TResponse> {
   const { hasJsonBody = false, ...init } = options;
   const url = `${BASE_URL}${path}`;
@@ -61,6 +73,7 @@ async function request<TResponse>(
   try {
     response = await fetch(url, {
       ...init,
+      credentials: 'include',
       headers: { ...buildHeaders(hasJsonBody), ...init.headers },
     });
   } catch (networkError) {
@@ -73,6 +86,13 @@ async function request<TResponse>(
 
   const rawText = await response.text();
   const body = rawText ? safeJsonParse(rawText) : null;
+
+  // Missing or expired session: start one (bot check included) and retry
+  // once. A second 401 is shown to the user as "access refused".
+  if (!isRetry && isSessionRequired(response.status, body)) {
+    await ensureSession(BASE_URL, true);
+    return request<TResponse>(path, options, true);
+  }
 
   if (!response.ok) {
     throw new ApiError(

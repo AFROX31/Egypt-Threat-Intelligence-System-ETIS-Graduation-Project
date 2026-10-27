@@ -229,8 +229,28 @@ export interface AnalyzeResponse {
   // evidence from the message text is NOT cancelled. engine_details still
   // reflects each engine's real, un-overridden output.
   allowlisted: boolean;
+  // The URL the URL engines analysed: the submitted url, or else the first
+  // link the backend found in the text. Null when neither exists.
+  scanned_url?: string | null;
+  url_source?: 'submitted' | 'extracted_from_text' | null;
+  // Other links found in the text, each scanned on its own as a URL-only
+  // submission. If one reaches a higher tier than the main scan it sets
+  // verdict/final_score, and decided_by is 'additional_link'. Optional so
+  // the page still works against a backend from before link extraction.
+  additional_links?: AdditionalLink[];
+  // Links beyond ETIS_MAX_EMBEDDED_LINKS that were not scanned.
+  additional_links_skipped?: number;
   saved: boolean;
   save_error: string | null;
+}
+
+export interface AdditionalLink {
+  url: string;
+  verdict: Verdict;
+  final_score: number;
+  decided_by: string | null;
+  engine_tiers: Record<string, Verdict>;
+  allowlisted: boolean;
 }
 
 // ---- GET /threats ----

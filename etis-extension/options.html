@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ETIS Email Scanner options</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 520px; margin: 32px auto; padding: 0 16px; color: #101c2c; }
+      label { display: block; font-weight: 600; margin-bottom: 6px; }
+      input { width: 100%; box-sizing: border-box; padding: 8px; font-family: monospace; }
+      button { margin-top: 12px; padding: 8px 16px; }
+      p { line-height: 1.5; }
+      #status { min-height: 1.5em; }
+    </style>
+  </head>
+  <body>
+    <h1>ETIS Email Scanner</h1>
+    <p>
+      Only needed when the ETIS server requires authentication. Ask the ETIS
+      operator for a key, or create one in the <code>backend</code> folder with
+      <code>py -3.13 manage_api_keys.py create gmail-extension</code>.
+    </p>
+    <label for="api-key">API key</label>
+    <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="etis_..." />
+    <button id="save" type="button">Save</button>
+    <button id="clear" type="button">Remove key</button>
+    <p id="status" role="status"></p>
+    <script src="options.js"></script>
+  </body>
+</html>

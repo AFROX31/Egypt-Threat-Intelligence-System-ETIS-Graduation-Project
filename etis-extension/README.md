@@ -89,12 +89,12 @@ No automated test suite — this is a prototype, not production code.
   the first qualifying one is extracted and scored; the rest are ignored.
   Scoring every link individually is a reasonable future enhancement, not
   built here.
-- **No API key handling.** `background.js` calls `/analyze` with no
-  `X-API-Key` header. This is fine for local development, since
-  `verify_api_key` no-ops when `ETIS_API_KEY` is unset on the backend —
-  but if a deployment ever sets that env var, this extension will need a
-  header added (and a safe way to store the key) before it will keep
-  working against it.
+- **API key on the Options page.** When the backend runs with
+  `ETIS_AUTH_REQUIRED=true`, the extension needs its own per-client key:
+  create it in `backend/` with `py -3.13 manage_api_keys.py create gmail-extension`,
+  then paste it on the extension's Options page (right-click the icon ->
+  Options). It is kept in `chrome.storage.local` and sent as `X-API-Key`.
+  Revoke it with `manage_api_keys.py revoke gmail-extension` if it leaks.
 - **Hardcoded localhost URLs.** Both `background.js`'s `API_BASE_URL` and
   `popup.js`'s `WEBSITE_BASE_URL` point at `localhost`. Pointing this at
   a hosted deployment means updating both constants.

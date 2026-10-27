@@ -35,8 +35,15 @@ import type { AnalyzeResponse } from './types';
  * dedicated, honest explanation instead.
  */
 export function explainVerdict(t: TFunction, result: AnalyzeResponse): string {
+  // Other links in the message are scanned on their own by the backend; one
+  // of them can raise the verdict above what the main URL and text reached.
+  const suspiciousLinks = (result.additional_links ?? []).filter((link) => link.verdict !== 'LOW');
+  const linksReason = suspiciousLinks.length > 0
+    ? t('scan.reasonAdditionalLinks', { count: suspiciousLinks.length })
+    : null;
+
   if (result.allowlisted) {
-    return t('scan.reasonAllowlisted');
+    return linksReason ? `${t('scan.reasonAllowlisted')} ${linksReason}` : t('scan.reasonAllowlisted');
   }
 
   const { rule_based, blacklist, url_model, text_model } = result.engine_details;
@@ -94,6 +101,8 @@ export function explainVerdict(t: TFunction, result: AnalyzeResponse): string {
   if (urlPattern && urlPattern.flags.length > 0) {
     reasons.push(t('scan.reasonUrlFlags', { count: urlPattern.flags.length }));
   }
+
+  if (linksReason) reasons.push(linksReason);
 
   if (reasons.length === 0) {
     reasons.push(result.verdict === 'LOW' ? t('scan.reasonNoIndicators') : t('scan.reasonLowConfidence'));

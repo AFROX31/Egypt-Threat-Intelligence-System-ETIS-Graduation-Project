@@ -1,6 +1,8 @@
 import type { TFunction } from 'i18next';
 
 import { ApiError } from './client';
+import { SessionStartError } from './session';
+import { BotCheckError } from './turnstile';
 
 /**
  * An error that is only a translation key (e.g. the empty-input message).
@@ -39,6 +41,13 @@ function serverDetail(body: unknown): string | undefined {
  */
 export function describeError(t: TFunction, error: unknown): ErrorDescription {
   if (error instanceof LocalizedError) return { message: t(error.key) };
+  if (error instanceof BotCheckError) return { message: t('errors.botCheck') };
+  if (error instanceof SessionStartError) {
+    if (error.status === 403) return { message: t('errors.botCheck') };
+    if (error.status === 429) return { message: t('errors.rateLimited') };
+    if (error.status === 503) return { message: t('errors.botCheckUnavailable') };
+    return { message: t('errors.server') };
+  }
 
   if (error instanceof ApiError) {
     const { status } = error;
@@ -46,6 +55,7 @@ export function describeError(t: TFunction, error: unknown): ErrorDescription {
     if (status === 400) return { message: t('errors.invalidInput'), detail: serverDetail(error.body) };
     if (status === 422) return { message: t('errors.invalidInput') };
     if (status === 401) return { message: t('errors.unauthorized') };
+    if (status === 413) return { message: t('errors.tooLarge') };
     if (status === 429) return { message: t('errors.rateLimited') };
     if (status === 502) return { message: t('errors.upstream') };
     if (status >= 500) return { message: t('errors.server') };

@@ -54,7 +54,7 @@ export function StatsPage() {
         {t('nav.stats')}
       </Typography>
 
-      {loading && <CircularProgress size={24} />}
+      {loading && <CircularProgress size={24} aria-label={t('common.loading')} />}
       {error != null && <ErrorAlert error={error} />}
 
       {stats && (
@@ -141,7 +141,7 @@ function StatCard({ icon, label, value }: { icon: ReactNode; label: string; valu
         <Typography sx={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, fontSize: '1.5rem' }}>
           {value}
         </Typography>
-        <Box sx={{ color: 'text.secondary' }}>{icon}</Box>
+        <Box sx={{ color: 'text.secondary' }} aria-hidden>{icon}</Box>
       </Stack>
       <Typography variant="caption" color="text.secondary">
         {label}

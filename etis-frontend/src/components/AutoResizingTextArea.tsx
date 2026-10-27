@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect, useState, useEffect } from 'react';
+import { useRef, useLayoutEffect, useState, useEffect, useId } from 'react';
 import { Box, Typography } from '@mui/material';
 
 interface AutoResizingTextAreaProps {
@@ -48,6 +48,7 @@ export function AutoResizingTextArea({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const textareaId = useId();
 
   // Tracks the normal column width this field would otherwise fill, so we
   // only widen beyond it when content genuinely can't fit, and so that
@@ -109,11 +110,18 @@ export function AutoResizingTextArea({
 
   return (
     <Box>
-      <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'text.secondary' }}>
+      <Typography
+        component="label"
+        htmlFor={textareaId}
+        variant="caption"
+        sx={{ display: 'block', mb: 0.5, color: 'text.secondary' }}
+      >
         {label}
       </Typography>
       <Box ref={containerRef} sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-        <textarea
+        <Box
+          component="textarea"
+          id={textareaId}
           ref={textareaRef}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -122,15 +130,22 @@ export function AutoResizingTextArea({
           style={{
             ...sharedFontStyle,
             padding: '8.5px 14px',
-            border: '1px solid rgba(0, 0, 0, 0.23)',
             borderRadius: 8,
             resize: 'none',
             overflow: 'hidden',
             boxSizing: 'border-box',
-            outline: 'none',
             display: 'block',
             flexShrink: 0,
             transition: 'width 0.15s ease, height 0.15s ease',
+          }}
+          // The native outline was turned off before, which left keyboard
+          // users with no sign of focus. Same focus look as the MUI fields.
+          // Border lives in sx, not the inline style, so the focus rule can change it.
+          sx={{
+            border: '1px solid rgba(0, 0, 0, 0.23)',
+            '&:hover': { borderColor: 'text.primary' },
+            '&:focus': { outline: 'none', borderColor: 'primary.main', boxShadow: (theme) => `inset 0 0 0 1px ${theme.palette.primary.main}` },
+            '@media (prefers-reduced-motion: reduce)': { transition: 'none !important' },
           }}
         />
       </Box>

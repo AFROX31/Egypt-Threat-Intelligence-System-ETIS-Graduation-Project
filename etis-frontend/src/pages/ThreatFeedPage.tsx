@@ -27,7 +27,9 @@ const MONO_FONT = "'IBM Plex Mono', monospace";
 export function ThreatFeedPage() {
   const { t } = useTranslation();
   const [entries, setEntries] = useState<ThreatEntry[]>([]);
-  const [totalMatching, setTotalMatching] = useState(0);
+  // Null until a request has succeeded, so the header never shows
+  // "0 total matching" next to an error or before the first load.
+  const [totalMatching, setTotalMatching] = useState<number | null>(null);
   const [offset, setOffset] = useState(0);
   const [source, setSource] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,8 @@ export function ThreatFeedPage() {
         if (cancelled) return;
         if (!(err instanceof ApiError)) console.error(err);
         setError(err);
+        setEntries([]);
+        setTotalMatching(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -64,10 +68,11 @@ export function ThreatFeedPage() {
     };
   }, [offset, source]);
 
+  const total = totalMatching ?? 0;
   const canGoPrev = offset > 0;
-  const canGoNext = offset + PAGE_SIZE < totalMatching;
-  const rangeStart = totalMatching === 0 ? 0 : offset + 1;
-  const rangeEnd = Math.min(offset + PAGE_SIZE, totalMatching);
+  const canGoNext = offset + PAGE_SIZE < total;
+  const rangeStart = total === 0 ? 0 : offset + 1;
+  const rangeEnd = Math.min(offset + PAGE_SIZE, total);
 
   return (
     <Box sx={{ py: 4, maxWidth: 900, mx: 'auto' }}>
@@ -93,15 +98,17 @@ export function ThreatFeedPage() {
           <MenuItem value="manual">{t('sources.manual')}</MenuItem>
         </TextField>
 
-        <Typography variant="body2" color="text.secondary">
-          <Box component="span" sx={{ fontFamily: MONO_FONT }}>
-            {totalMatching.toLocaleString()}
-          </Box>{' '}
-          {t('threats.totalMatching')}
-        </Typography>
+        {totalMatching !== null && error == null && (
+          <Typography variant="body2" color="text.secondary" role="status">
+            <Box component="span" sx={{ fontFamily: MONO_FONT }}>
+              {totalMatching.toLocaleString()}
+            </Box>{' '}
+            {t('threats.totalMatching')}
+          </Typography>
+        )}
       </Stack>
 
-      {loading && <CircularProgress size={24} />}
+      {loading && <CircularProgress size={24} aria-label={t('common.loading')} />}
       {error != null && <ErrorAlert error={error} />}
 
       {!loading && !error && entries.length === 0 && (
@@ -115,7 +122,7 @@ export function ThreatFeedPage() {
       {!loading && !error && entries.length > 0 && (
         <>
           <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-            <Table size="small">
+            <Table size="small" aria-label={t('nav.threats')}>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
                   <TableCell sx={{ fontWeight: 600 }}>{t('threats.domain')}</TableCell>
@@ -161,7 +168,7 @@ export function ThreatFeedPage() {
               dir="ltr"
               sx={{ display: 'inline-block', fontFamily: MONO_FONT }}
             >
-              {rangeStart.toLocaleString()}–{rangeEnd.toLocaleString()} / {totalMatching.toLocaleString()}
+              {rangeStart.toLocaleString()}–{rangeEnd.toLocaleString()} / {total.toLocaleString()}
             </Typography>
           </Stack>
         </>

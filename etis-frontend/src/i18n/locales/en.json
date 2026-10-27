@@ -72,16 +72,28 @@
     "modelOverridden": "Model score {{percent}}% is not counted: this is a verified Egyptian brand domain.",
     "reasonUrlModelHigh": "This URL very strongly matches phishing URL patterns (model score {{percent}}%).",
     "reasonUrlModelMedium": "This URL resembles phishing URL patterns (model score {{percent}}%).",
-    "reasonTextModel": "The message text matches phishing language patterns (model score {{percent}}%)."
+    "reasonTextModel": "The message text matches phishing language patterns (model score {{percent}}%).",
+    "engineAdditionalLink": "Another link in the message",
+    "reasonAdditionalLinks_one": "Another link in the message also looks suspicious.",
+    "reasonAdditionalLinks_other": "{{count}} other links in the message also look suspicious.",
+    "additionalLinksHeading_one": "Other link found in the message",
+    "additionalLinksHeading_other": "Other links found in the message ({{count}})",
+    "additionalLinksSkipped_one": "1 more link was not scanned (limit reached).",
+    "additionalLinksSkipped_other": "{{count}} more links were not scanned (limit reached).",
+    "verdictAria": "Verdict: {{verdict}}",
+    "resultAnnouncement": "Scan complete. Verdict: {{verdict}}."
   },
   "errors": {
     "network": "Could not reach the server. Make sure the service is running, then try again.",
     "invalidInput": "The input is not valid. Check the link or text and try again.",
-    "unauthorized": "Access to the service was refused. Check the access key.",
+    "unauthorized": "Access to the service was refused. Reload the page and try again.",
     "rateLimited": "Too many scans in a short time. Wait a minute and try again.",
     "upstream": "The threat database could not be reached. Try again shortly.",
     "server": "The server hit an error while processing this. Try again.",
-    "generic": "The request could not be completed (code {{status}}). Try again."
+    "generic": "The request could not be completed (code {{status}}). Try again.",
+    "tooLarge": "The submission is too large. Shorten the text and try again.",
+    "botCheck": "The automatic bot check did not pass. Reload the page and try again.",
+    "botCheckUnavailable": "The bot check service could not be reached. Try again in a minute."
   },
   "threats": {
     "domain": "Domain",
@@ -106,11 +118,33 @@
     "byVerdictHeading": "Scans by verdict"
   },
   "common": {
-    "unexpectedError": "Something went wrong. Please try again."
+    "unexpectedError": "Something went wrong. Please try again.",
+    "loading": "Loading…"
   },
   "sources": {
     "phishtank": "PhishTank",
     "openphish": "OpenPhish",
     "manual": "Manual"
+  },
+  "advice": {
+    "heading": "What should I do?",
+    "highDoNotOpen": "Do not open the link, reply, or call any number in the message. Delete it.",
+    "neverShareCodes": "Never share a one-time code (OTP), card number, PIN, CVV or wallet PIN. Banks, wallets and delivery companies never ask for them by SMS, call or WhatsApp.",
+    "contactBrand": "This looks like an imitation of {{brand}}. If you are worried about your account, contact {{brand}} only through its official app or the phone number printed on your card or on its official website.",
+    "highIfAlreadyEntered": "If you already entered your details, call your bank straight away on the number on the back of your card to block the card, and change your password.",
+    "highReport": "Warn your colleagues and family, and report the message to the institution it pretends to be from.",
+    "mediumVerifyFirst": "Be careful: do not enter passwords, codes or card details on this link until you have checked it.",
+    "mediumNoPressure": "Check the request yourself by opening the official app or typing the official website address, not by using the link. Real institutions do not threaten to close your account within minutes.",
+    "lowNoIndicators": "ETIS found no warning signs, but no system catches every new scam. If the message asks for money or codes, check with the sender through a channel you already trust.",
+    "allowlistedCheckSource": "This is the official domain of a verified Egyptian institution. Make sure you opened it yourself or from the official app, not from an unexpected message."
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content",
+    "mainNavigation": "Main sections"
+  },
+  "session": {
+    "botCheckHeading": "Security check",
+    "botCheckIntro": "Before you can scan, Cloudflare checks that you are a person and not a bot. This usually takes a second; if a checkbox appears, tick it.",
+    "botCheckPassed": "Check passed. You can scan now."
   }
 }
