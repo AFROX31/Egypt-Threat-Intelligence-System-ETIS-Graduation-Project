@@ -24,7 +24,7 @@ never contains validation/test answers:
 
 The demo/production database ("etis") keeps the full feed (no flag). An
 environment variable DATABASE_URL overrides the value in .env, so the
-evaluation scripts (calibrate_thresholds.py, evaluate_*.py) use whichever
+evaluation scripts (evaluate_*.py) use whichever
 database the current terminal points at.
 
 Usage:

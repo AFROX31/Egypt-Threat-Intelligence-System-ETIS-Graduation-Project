@@ -44,6 +44,8 @@ Rules this script enforces or reports
 Usage (project root, venv active):
     python evaluation/evaluate_heldout_typosquat_benchmark.py                 (DATABASE_URL -> etis_eval, same window)
     python evaluation/evaluate_heldout_typosquat_benchmark.py --from-results
+    python evaluation/evaluate_heldout_typosquat_benchmark.py --set heldout2  (second held-out set, 2026-10-26;
+        built by data/scripts/build_heldout2_typosquat_benchmark.py; files *_heldout2* / heldout2_*)
 """
 
 import argparse
@@ -64,6 +66,19 @@ MANIFEST_PATH = PROJECT_ROOT / "data" / "benchmarks" / "heldout_manifest.json"
 RESULTS_PATH = PROJECT_ROOT / "evaluation" / "heldout_typosquat_results.csv"
 REPORT_PATH = PROJECT_ROOT / "evaluation" / "heldout_typosquat_report.txt"
 RELABELLED_REPORT_PATH = PROJECT_ROOT / "evaluation" / "heldout_typosquat_report_relabelled.txt"
+
+
+def use_set(name: str) -> None:
+    """Point the module paths at another held-out set (default: the first one)."""
+    global BENCHMARK_PATH, MANIFEST_PATH, RESULTS_PATH, REPORT_PATH, RELABELLED_REPORT_PATH
+    if name == "heldout":
+        return
+    BENCHMARK_PATH = PROJECT_ROOT / "data" / "benchmarks" / f"egypt_brand_typosquats_{name}.csv"
+    MANIFEST_PATH = PROJECT_ROOT / "data" / "benchmarks" / f"{name}_manifest.json"
+    RESULTS_PATH = PROJECT_ROOT / "evaluation" / f"{name}_typosquat_results.csv"
+    REPORT_PATH = PROJECT_ROOT / "evaluation" / f"{name}_typosquat_report.txt"
+    RELABELLED_REPORT_PATH = PROJECT_ROOT / "evaluation" / f"{name}_typosquat_report_from_results.txt"
+
 ENGINES = ["rule_based", "blacklist", "url_model"]
 THIN_N = 20
 
@@ -246,7 +261,10 @@ def main() -> None:
     parser.add_argument("--from-results", action="store_true", help="no scoring: recompute the report from the saved results CSV")
     parser.add_argument("--allow-changed-files", action="store_true", help="DEVELOPMENT run: skip the freeze refusal")
     parser.add_argument("--allow-any-db", action="store_true", help="testing only")
+    parser.add_argument("--set", default="heldout", choices=["heldout", "heldout2"],
+                        help="which held-out benchmark (default: the first, 2026-10-22)")
     args = parser.parse_args()
+    use_set(args.set)
 
     manifest = load_manifest()
     problems: list[str] = []
@@ -271,7 +289,7 @@ def main() -> None:
     genuine = df[df["kind"] == "genuine"]
     controls = df[df["kind"] == "control"]
 
-    out = ["ETIS held-out Egyptian-brand typosquat benchmark (final system)"]
+    out = [f"ETIS held-out Egyptian-brand typosquat benchmark (final system), set: {args.set} ({BENCHMARK_PATH.name})"]
     if args.from_results:
         out += ["*** RELABELLED REPORT: recomputed from the saved results CSV, NO rescoring. Scores are identical to the",
                 "    committed raw run; only technique-class labels/groupings were corrected after the first report was read",

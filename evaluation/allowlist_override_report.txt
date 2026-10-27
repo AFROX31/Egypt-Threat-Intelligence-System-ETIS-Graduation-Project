@@ -1,0 +1,119 @@
+ETIS allowlist override measurement: allowlisted Egyptian-brand URLs the system would flag WITHOUT the override
+Live scorer + evaluation DB (training-split-only blacklist); 'no allowlist' recomputed from the same engine outputs.
+errors excluded: 0
+Rates are per URL; URLs of one brand host are not independent, so also read the per-host counts.
+
+== dataset_test (legitimate n = 33, hosts = 9, brand domains = 7) ==
+  allowlisted (live): 100.0% [ 89.6, 100.0] (33/33)
+  live verdict >= MEDIUM:   0.0% [  0.0,  10.4] (0/33)
+  WITHOUT allowlist >= MEDIUM:   0.0% [  0.0,  10.4] (0/33)
+  WITHOUT allowlist HIGH:        0.0% [  0.0,  10.4] (0/33)
+    rule_based  alone >= MEDIUM:   0.0% [  0.0,  10.4] (0/33)
+    blacklist   alone >= MEDIUM:   0.0% [  0.0,  10.4] (0/33)
+    url_model   alone >= MEDIUM:   0.0% [  0.0,  10.4] (0/33)
+  brand domains with >= 1 URL flagged without the allowlist: 0 of 7 (flagged / URLs)
+
+== constructed_dev (legitimate n = 260, hosts = 100, brand domains = 20) ==
+  allowlisted (live): 100.0% [ 98.5, 100.0] (260/260)
+  live verdict >= MEDIUM:   0.0% [  0.0,   1.5] (0/260)
+  WITHOUT allowlist >= MEDIUM:  38.1% [ 32.4,  44.1] (99/260)
+  WITHOUT allowlist HIGH:       15.8% [ 11.8,  20.7] (41/260)
+    rule_based  alone >= MEDIUM:   0.0% [  0.0,   1.5] (0/260)
+    blacklist   alone >= MEDIUM:   0.0% [  0.0,   1.5] (0/260)
+    url_model   alone >= MEDIUM:  38.1% [ 32.4,  44.1] (99/260)
+  brand domains with >= 1 URL flagged without the allowlist: 19 of 20 (flagged / URLs)
+    banquemisr.com                      7 / 13  
+    fawry.com                           7 / 13  
+    jumia.com.eg                        7 / 13  
+    qnbalahli.com                       7 / 13  
+    orange.eg                           7 / 13  
+    noon.com                            6 / 13  
+    amazon.eg                           6 / 13  
+    instapay.eg                         6 / 13  
+    talabat.com                         6 / 13  
+    cibeg.com                           6 / 13  
+    etisalat.eg                         6 / 13  
+    aaib.com                            5 / 13  
+    te.eg                               5 / 13  
+    breadfast.com                       4 / 13  
+    eand.com.eg                         4 / 13  
+    qnb.com.eg                          4 / 13  
+    egyptair.com                        3 / 13  
+    nbe.com.eg                          2 / 13  
+    vodafone.com.eg                     1 / 13  
+
+== constructed_ho (legitimate n = 280, hosts = 120, brand domains = 20) ==
+  allowlisted (live): 100.0% [ 98.6, 100.0] (280/280)
+  live verdict >= MEDIUM:   0.0% [  0.0,   1.4] (0/280)
+  WITHOUT allowlist >= MEDIUM:  40.4% [ 34.8,  46.2] (113/280)
+  WITHOUT allowlist HIGH:       21.4% [ 17.0,  26.6] (60/280)
+    rule_based  alone >= MEDIUM:   0.0% [  0.0,   1.4] (0/280)
+    blacklist   alone >= MEDIUM:   0.0% [  0.0,   1.4] (0/280)
+    url_model   alone >= MEDIUM:  40.4% [ 34.8,  46.2] (113/280)
+  by URL type (without allowlist >= MEDIUM):
+    genuine_path           2.0% [  0.6,   7.0] (2/100)
+    genuine_quirk         35.0% [ 25.5,  45.9] (28/80)
+    genuine_subdomain     83.0% [ 74.5,  89.1] (83/100)
+  brand domains with >= 1 URL flagged without the allowlist: 20 of 20 (flagged / URLs)
+    banquemisr.com                      9 / 14  
+    te.eg                               8 / 14  
+    cibeg.com                           7 / 14  
+    amazon.eg                           7 / 14  
+    orange.eg                           7 / 14  
+    qnbalahli.com                       7 / 14  
+    jumia.com.eg                        7 / 14  
+    fawry.com                           7 / 14  
+    noon.com                            7 / 14  
+    etisalat.eg                         6 / 14  
+    qnb.com.eg                          6 / 14  
+    eand.com.eg                         6 / 14  
+    instapay.eg                         6 / 14  
+    aaib.com                            5 / 14  
+    breadfast.com                       5 / 14  
+    nbe.com.eg                          4 / 14  
+    talabat.com                         4 / 14  
+    egyptair.com                        3 / 14  
+    digital.gov.eg                      1 / 14  
+    vodafone.com.eg                     1 / 14  
+
+== dataset_train (legitimate n = 15, hosts = 11, brand domains = 10) ==
+  NOTE: training rows; the URL model was fitted on them, so this understates the effect.
+  allowlisted (live): 100.0% [ 79.6, 100.0] (15/15)
+  live verdict >= MEDIUM:   0.0% [  0.0,  20.4] (0/15)
+  WITHOUT allowlist >= MEDIUM:   0.0% [  0.0,  20.4] (0/15)
+  WITHOUT allowlist HIGH:        0.0% [  0.0,  20.4] (0/15)
+    rule_based  alone >= MEDIUM:   0.0% [  0.0,  20.4] (0/15)
+    blacklist   alone >= MEDIUM:   0.0% [  0.0,  20.4] (0/15)
+    url_model   alone >= MEDIUM:   0.0% [  0.0,  20.4] (0/15)
+  brand domains with >= 1 URL flagged without the allowlist: 0 of 10 (flagged / URLs)
+
+== dataset_val (legitimate n = 4, hosts = 4, brand domains = 4) ==
+  allowlisted (live): 100.0% [ 51.0, 100.0] (4/4)
+  live verdict >= MEDIUM:   0.0% [  0.0,  49.0] (0/4)
+  WITHOUT allowlist >= MEDIUM:   0.0% [  0.0,  49.0] (0/4)
+  WITHOUT allowlist HIGH:        0.0% [  0.0,  49.0] (0/4)
+    rule_based  alone >= MEDIUM:   0.0% [  0.0,  49.0] (0/4)
+    blacklist   alone >= MEDIUM:   0.0% [  0.0,  49.0] (0/4)
+    url_model   alone >= MEDIUM:   0.0% [  0.0,  49.0] (0/4)
+  brand domains with >= 1 URL flagged without the allowlist: 0 of 4 (flagged / URLs)
+
+== observed (legitimate n = 2, hosts = 1, brand domains = 1) ==
+  allowlisted (live): 100.0% [ 34.2, 100.0] (2/2)
+  live verdict >= MEDIUM:   0.0% [  0.0,  65.8] (0/2)
+  WITHOUT allowlist >= MEDIUM:  50.0% [  9.5,  90.5] (1/2)
+  WITHOUT allowlist HIGH:        0.0% [  0.0,  65.8] (0/2)
+    rule_based  alone >= MEDIUM:   0.0% [  0.0,  65.8] (0/2)
+    blacklist   alone >= MEDIUM:   0.0% [  0.0,  65.8] (0/2)
+    url_model   alone >= MEDIUM:  50.0% [  9.5,  90.5] (1/2)
+  brand domains with >= 1 URL flagged without the allowlist: 1 of 1 (flagged / URLs)
+    cibeg.com                           1 / 2   
+
+== observed browser URLs (url_model probability; MEDIUM threshold from the artifact) ==
+  OBS-1: p = 0.7598, without allowlist MEDIUM, live LOW
+  OBS-2: p = 0.5794, without allowlist LOW, live LOW
+
+Reading guide
+ - The constructed sets are the allowlist's own test rows (paths, subdomains, quirks on the brands' domains);
+   dataset_test is the only set of REAL brand URLs the model never trained on. Quote it, with its host count.
+ - A high 'without allowlist' rate means the allowlist is load-bearing: removing or shrinking it would raise
+   false positives on the brands' own sites. It is not a reason to retune anything on these rows.

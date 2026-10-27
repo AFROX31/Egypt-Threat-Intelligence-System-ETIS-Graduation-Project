@@ -1,0 +1,72 @@
+ETIS scheme-stripping test: cost of the scheme-less 'https://' assumption (TEST split, final system)
+Variants: original (as stored) | stripped (no scheme -> ensure_scheme() serves it as https://) | as_http.
+The stripped/as_http URLs are SYNTHETIC inputs; thresholds and rules unchanged; evaluation DB only.
+rows: 13,639 URLs scored in all three variants; rows with an error in any variant excluded: 0
+original schemes: {'https': 13087, 'http': 552}
+Paired exact McNemar compares original vs stripped on the same rows (lost = flagged only as original).
+
+== UNSEEN-HOST test URLs (group_type == 'host')  <- headline ==
+  phishing (n = 5,676), recall:
+    all   MEDIUM+ system     original  93.4% [ 92.7,  94.0] (5299/5676)  stripped  92.5% [ 91.8,  93.2] (5251/5676)  as_http  95.2% [ 94.6,  95.7] (5403/5676)  orig->stripped lost 48, gained 0, McNemar p = 0.0000
+    all   MEDIUM+ url_model  original  93.4% [ 92.7,  94.0] (5299/5676)  stripped  92.5% [ 91.8,  93.2] (5250/5676)  as_http  95.2% [ 94.6,  95.7] (5403/5676)  orig->stripped lost 49, gained 0, McNemar p = 0.0000
+    all   HIGH    system     original  85.8% [ 84.8,  86.7] (4869/5676)  stripped  85.0% [ 84.1,  85.9] (4827/5676)  as_http  87.9% [ 87.1,  88.8] (4992/5676)  orig->stripped lost 42, gained 0, McNemar p = 0.0000
+    all   HIGH    url_model  original  85.8% [ 84.8,  86.7] (4869/5676)  stripped  85.0% [ 84.1,  85.9] (4827/5676)  as_http  87.9% [ 87.1,  88.8] (4992/5676)  orig->stripped lost 42, gained 0, McNemar p = 0.0000
+    https MEDIUM+ system     original  93.7% [ 93.0,  94.3] (4845/5171)  stripped  93.7% [ 93.0,  94.3] (4845/5171)  as_http  95.7% [ 95.1,  96.2] (4949/5171)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https MEDIUM+ url_model  original  93.7% [ 93.0,  94.3] (4845/5171)  stripped  93.7% [ 93.0,  94.3] (4845/5171)  as_http  95.7% [ 95.1,  96.2] (4949/5171)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    system     original  86.3% [ 85.4,  87.3] (4465/5171)  stripped  86.3% [ 85.4,  87.3] (4465/5171)  as_http  88.7% [ 87.8,  89.6] (4588/5171)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    url_model  original  86.3% [ 85.4,  87.3] (4465/5171)  stripped  86.3% [ 85.4,  87.3] (4465/5171)  as_http  88.7% [ 87.8,  89.6] (4588/5171)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    http  MEDIUM+ system     original  89.9% [ 87.0,  92.2] (454/505)    stripped  80.4% [ 76.7,  83.6] (406/505)    as_http  89.9% [ 87.0,  92.2] (454/505)    orig->stripped lost 48, gained 0, McNemar p = 0.0000
+    http  MEDIUM+ url_model  original  89.9% [ 87.0,  92.2] (454/505)    stripped  80.2% [ 76.5,  83.4] (405/505)    as_http  89.9% [ 87.0,  92.2] (454/505)    orig->stripped lost 49, gained 0, McNemar p = 0.0000
+    http  HIGH    system     original  80.0% [ 76.3,  83.3] (404/505)    stripped  71.7% [ 67.6,  75.4] (362/505)    as_http  80.0% [ 76.3,  83.3] (404/505)    orig->stripped lost 42, gained 0, McNemar p = 0.0000
+    http  HIGH    url_model  original  80.0% [ 76.3,  83.3] (404/505)    stripped  71.7% [ 67.6,  75.4] (362/505)    as_http  80.0% [ 76.3,  83.3] (404/505)    orig->stripped lost 42, gained 0, McNemar p = 0.0000
+  legitimate (n = 4,147), false-positive rate:
+    all   MEDIUM+ system     original   0.9% [  0.7,   1.3] (38/4147)    stripped   0.9% [  0.6,   1.2] (37/4147)    as_http   2.0% [  1.7,   2.5] (85/4147)    orig->stripped lost 1, gained 0, McNemar p = 1.0000
+    all   MEDIUM+ url_model  original   0.8% [  0.6,   1.2] (35/4147)    stripped   0.8% [  0.6,   1.1] (34/4147)    as_http   2.0% [  1.6,   2.4] (82/4147)    orig->stripped lost 1, gained 0, McNemar p = 1.0000
+    all   HIGH    system     original   0.0% [  0.0,   0.1] (0/4147)     stripped   0.0% [  0.0,   0.1] (0/4147)     as_http   0.2% [  0.1,   0.4] (10/4147)    orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    all   HIGH    url_model  original   0.0% [  0.0,   0.1] (0/4147)     stripped   0.0% [  0.0,   0.1] (0/4147)     as_http   0.2% [  0.1,   0.4] (10/4147)    orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https MEDIUM+ system     original   0.9% [  0.7,   1.2] (37/4108)    stripped   0.9% [  0.7,   1.2] (37/4108)    as_http   2.0% [  1.7,   2.5] (84/4108)    orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https MEDIUM+ url_model  original   0.8% [  0.6,   1.2] (34/4108)    stripped   0.8% [  0.6,   1.2] (34/4108)    as_http   2.0% [  1.6,   2.4] (81/4108)    orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    system     original   0.0% [  0.0,   0.1] (0/4108)     stripped   0.0% [  0.0,   0.1] (0/4108)     as_http   0.2% [  0.1,   0.4] (10/4108)    orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    url_model  original   0.0% [  0.0,   0.1] (0/4108)     stripped   0.0% [  0.0,   0.1] (0/4108)     as_http   0.2% [  0.1,   0.4] (10/4108)    orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    http  MEDIUM+ system     original   2.6% [  0.5,  13.2] (1/39)       stripped   0.0% [  0.0,   9.0] (0/39)       as_http   2.6% [  0.5,  13.2] (1/39)       orig->stripped lost 1, gained 0, McNemar p = 1.0000
+    http  MEDIUM+ url_model  original   2.6% [  0.5,  13.2] (1/39)       stripped   0.0% [  0.0,   9.0] (0/39)       as_http   2.6% [  0.5,  13.2] (1/39)       orig->stripped lost 1, gained 0, McNemar p = 1.0000
+    http  HIGH    system     original   0.0% [  0.0,   9.0] (0/39)       stripped   0.0% [  0.0,   9.0] (0/39)       as_http   0.0% [  0.0,   9.0] (0/39)       orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    http  HIGH    url_model  original   0.0% [  0.0,   9.0] (0/39)       stripped   0.0% [  0.0,   9.0] (0/39)       as_http   0.0% [  0.0,   9.0] (0/39)       orig->stripped lost 0, gained 0, McNemar p = 1.0000
+
+== group_type == 'shared_platform' (separate, never pooled) ==
+  phishing (n = 3,815), recall:
+    all   MEDIUM+ system     original  99.9% [ 99.7,  99.9] (3810/3815)  stripped  99.9% [ 99.7,  99.9] (3810/3815)  as_http 100.0% [ 99.9, 100.0] (3815/3815)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    all   MEDIUM+ url_model  original  99.8% [ 99.6,  99.9] (3807/3815)  stripped  99.8% [ 99.6,  99.9] (3807/3815)  as_http  99.8% [ 99.7,  99.9] (3809/3815)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    all   HIGH    system     original  98.9% [ 98.5,  99.2] (3774/3815)  stripped  98.9% [ 98.5,  99.2] (3774/3815)  as_http  98.9% [ 98.5,  99.2] (3773/3815)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    all   HIGH    url_model  original  98.9% [ 98.5,  99.2] (3774/3815)  stripped  98.9% [ 98.5,  99.2] (3774/3815)  as_http  98.9% [ 98.5,  99.2] (3773/3815)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https MEDIUM+ system     original  99.9% [ 99.7,  99.9] (3802/3807)  stripped  99.9% [ 99.7,  99.9] (3802/3807)  as_http 100.0% [ 99.9, 100.0] (3807/3807)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https MEDIUM+ url_model  original  99.8% [ 99.6,  99.9] (3799/3807)  stripped  99.8% [ 99.6,  99.9] (3799/3807)  as_http  99.8% [ 99.7,  99.9] (3801/3807)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    system     original  98.9% [ 98.5,  99.2] (3766/3807)  stripped  98.9% [ 98.5,  99.2] (3766/3807)  as_http  98.9% [ 98.5,  99.2] (3765/3807)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    url_model  original  98.9% [ 98.5,  99.2] (3766/3807)  stripped  98.9% [ 98.5,  99.2] (3766/3807)  as_http  98.9% [ 98.5,  99.2] (3765/3807)  orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    http  MEDIUM+ system     original 100.0% [ 67.6, 100.0] (8/8)        stripped 100.0% [ 67.6, 100.0] (8/8)        as_http 100.0% [ 67.6, 100.0] (8/8)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    http  MEDIUM+ url_model  original 100.0% [ 67.6, 100.0] (8/8)        stripped 100.0% [ 67.6, 100.0] (8/8)        as_http 100.0% [ 67.6, 100.0] (8/8)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    http  HIGH    system     original 100.0% [ 67.6, 100.0] (8/8)        stripped 100.0% [ 67.6, 100.0] (8/8)        as_http 100.0% [ 67.6, 100.0] (8/8)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    http  HIGH    url_model  original 100.0% [ 67.6, 100.0] (8/8)        stripped 100.0% [ 67.6, 100.0] (8/8)        as_http 100.0% [ 67.6, 100.0] (8/8)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+  legitimate (n = 1), false-positive rate:
+    all   MEDIUM+ system     original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    all   MEDIUM+ url_model  original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    all   HIGH    system     original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    all   HIGH    url_model  original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https MEDIUM+ system     original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https MEDIUM+ url_model  original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    system     original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+    https HIGH    url_model  original   0.0% [  0.0,  79.3] (0/1)        stripped   0.0% [  0.0,  79.3] (0/1)        as_http   0.0% [  0.0,  79.3] (0/1)        orig->stripped lost 0, gained 0, McNemar p = 1.0000
+
+== Which engine changed? unseen-host rows whose system verdict moved original -> stripped ==
+  rows with a different verdict: 59
+    rule_based  tier changed in 0 of them
+    blacklist   tier changed in 0 of them
+    url_model   tier changed in 59 of them
+  allowlist decision changed anywhere: 0 rows
+
+Reading guide
+ - For originally-https rows the URL model sees the same input after stripping, so their numbers should
+   hardly move; the cost of the assumption sits in the originally-http rows (a small share of the data).
+ - 'as_http' is the counterfactual assumption. Compare stripped vs as_http on the http rows to see what
+   the https choice gives away (missed phishing) and on legitimate rows what it saves (fewer false positives).
+ - The share of users who omit the scheme is unknown; this measures the per-URL cost, not its frequency.

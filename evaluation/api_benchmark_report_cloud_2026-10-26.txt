@@ -1,0 +1,26 @@
+ETIS -- API Performance Benchmark Report
+Base URL: http://127.0.0.1:8000
+Run: 2026-10-26 18:09  machine: Linux-6.18.44-fc-v153-x86_64-with-glibc2.39, x86_64, 4 logical CPUs, Python 3.13.17
+Machine label (ETIS_BENCHMARK_MACHINE): Claude cloud container (NOT AFRO's laptop)
+
+=== /analyze sequential latency, by input type ===
+url_only   N=40   errors=0   mean=14.5ms  median=14.1ms  p95=20.1ms  p99=25.8ms  min=9.7ms  max=25.8ms
+text_only  N=40   errors=0   mean=5.7ms  median=5.1ms  p95=7.8ms  p99=10.1ms  min=4.6ms  max=10.1ms
+both       N=40   errors=0   mean=14.6ms  median=14.9ms  p95=19.6ms  p99=21.8ms  min=10.1ms  max=21.8ms
+
+=== Throughput ===
+Sequential: 85.50 req/s (40 requests in 0.5s)
+Concurrent (10 workers): 82.04 req/s (100 requests in 1.2s, 0 non-200 responses)
+
+=== Lighter endpoints ===
+GET /threats: mean=11.9ms  median=11.7ms  p95=14.5ms
+GET /stats: mean=21.3ms  median=20.2ms  p95=29.8ms
+
+=== Resource utilization (server process) ===
+During concurrent burst: CPU mean=205.5%  max=214.8%  |  Memory mean=324.6MB  max=324.6MB  (6 samples)
+
+======================================================================
+CAVEAT: measured against localhost on local development hardware
+(see Chapter 5.1 hardware spec) -- no network latency, no hosted-
+deployment contention. Do not present as representative of the
+Railway/Render hosted demo without a separate benchmark against it.

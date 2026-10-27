@@ -1,0 +1,236 @@
+NOTE (2026-10-26): DEVELOPMENT re-run after the has_scheme() fix in four frozen files. All 2,032 rows scored byte-identically to the frozen run (heldout2_typosquat_report.txt), which stays the held-out result.
+ETIS held-out Egyptian-brand typosquat benchmark (final system), set: heldout2 (egypt_brand_typosquats_heldout2.csv)
+*** NOT HELD-OUT: files changed since generation (development run) ***
+    changed since generation: backend/app/core/url_validation.py
+    changed since generation: backend/app/engines/ml/url_model_inference.py
+    changed since generation: backend/app/engines/rule_based/domain_typosquatting_detector.py
+    changed since generation: backend/app/engines/rule_based/url_pattern_analyzer.py
+Generated 2026-10-26 with seed 20261026; git HEAD at generation: 
+rows scored: typosquat 1,668 (headline 1,626, ambiguous 42), genuine 280, controls 84; errors excluded: 0
+candidates dropped at generation: {'dropped_host_in_dataset': 2, 'dropped_host_in_dev_or_heldout1': 1759}
+CIs assume independent rows; rows share brands, so they are optimistic (treat < ~5 points as noise).
+
+== Genuine own-domain URLs (constructed; mostly test the allowlist) ==
+flagged >= MEDIUM: 0.0% [0.0, 1.4]  (0/280)
+flagged  = HIGH  : 0.0% [0.0, 1.4]  (0/280)
+allowlisted      : 100.0% [98.6, 100.0]  (280/280)
+  genuine_path         flagged 0.0% [0.0, 3.7]  (0/100)
+  genuine_quirk        flagged 0.0% [0.0, 4.6]  (0/80)
+  genuine_subdomain    flagged 0.0% [0.0, 3.7]  (0/100)
+
+== Controls: real OTHER organisations (written from memory, not verified; separate, never pooled) ==
+control_egypt_site: flagged >= MEDIUM 25.0% [13.8, 41.1]  (9/36);  HIGH 5.6% [1.5, 18.1]  (2/36)
+    FLAGGED HIGH   by url_model  https://www.youm7.com/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.almasryalyoum.com/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://almasryalyoum.com/en   (host in dataset: 1)
+    FLAGGED HIGH   by url_model  https://www.olx.com.eg/   (host in dataset: 0)
+    FLAGGED MEDIUM by url_model  https://olx.com.eg/en   (host in dataset: 0)
+    FLAGGED MEDIUM by url_model  https://www.vezeeta.com/   (host in dataset: 0)
+    FLAGGED MEDIUM by url_model  https://vezeeta.com/en   (host in dataset: 0)
+    FLAGGED MEDIUM by url_model  https://www.swvl.com/   (host in dataset: 0)
+    FLAGGED MEDIUM by url_model  https://swvl.com/en   (host in dataset: 0)
+control_namesake_org: flagged >= MEDIUM 45.8% [32.6, 59.7]  (22/48);  HIGH 8.3% [3.3, 19.6]  (4/48)
+    FLAGGED MEDIUM by url_model  https://www.orange.fr/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://orange.fr/search   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.orange.com/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://orange.com/search   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.orange.pl/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.orange.es/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://orange.es/search   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.orange.ro/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.amazon.com/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.amazon.de/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.amazon.co.uk/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.amazon.in/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.amazon.fr/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.amazon.es/   (host in dataset: 1)
+    FLAGGED MEDIUM by url_model  https://www.eand.com/   (host in dataset: 0)
+    FLAGGED HIGH   by url_model  https://www.jumia.com.ng/   (host in dataset: 0)
+    FLAGGED HIGH   by url_model  https://www.jumia.co.ke/   (host in dataset: 0)
+    FLAGGED MEDIUM by url_model  https://www.jumia.ma/   (host in dataset: 0)
+    FLAGGED MEDIUM by rule_based https://www.cibc.com/   (host in dataset: 1)
+    FLAGGED MEDIUM by rule_based https://cibc.com/sports   (host in dataset: 1)
+    FLAGGED HIGH   by url_model  https://www.qnb.com/   (host in dataset: 0)
+    FLAGGED HIGH   by url_model  https://qnb.com/search   (host in dataset: 0)
+  Note: 18-24 domains x 2 URLs each, so the effective n is the number of DOMAINS, not URLs.
+  Note: host_in_dataset=1 only says the host occurs in the dataset (label not checked); popular hosts may be in Tranco training rows.
+
+== Typosquats (ambiguous rows excluded) ==
+A pooled number depends on how many easy techniques this benchmark contains; quote the class and technique lines instead.
+pooled >= MEDIUM: 78.2% [76.2, 80.2]  (1272/1626)   (do NOT quote as 'the' result)
+pooled  = HIGH  : 22.1% [20.2, 24.2]  (360/1626)
+
+== By technique class (pooled rows; 'macro' = unweighted mean of the per-technique rates, techniques with n >= 20) ==
+class                                                                    techs     n  pooled >= MEDIUM [95% CI]     macro
+A. rule built BEFORE the dev set (partly circular)                           7   250  100.0% [ 98.5, 100.0]      100.0%
+B. pre-existing edit-distance rule (brand domains >= 9 chars only)           6   336   97.6% [ 95.4,  98.8]       97.9%
+C. rule built FROM dev misses (new vocabulary here)                          9   697   81.3% [ 78.3,  84.1]       81.3%
+D. no dedicated rule (generalisation)                                        6   343   37.0% [ 32.1,  42.3]       38.1%
+  Class D is the closest thing to a generalisation measure; class A is partly circular; class B only works for brand
+  domains of 9+ characters (hence the short-brand gap); class C was designed from the dev misses (here with new vocabulary).
+
+-- short brands (label <= 4: aaib, noon, nbe, qnb, te) vs normal --
+brand_size                        n  system >= MEDIUM  [95% CI]                  HIGH    rule  url_model
+normal                         1197   82.0% [ 79.7,  84.0]                      21.1%   74.4%      31.7%
+short                           429   67.8% [ 63.3,  72.1]                      24.9%   56.9%      34.0%
+
+-- technique name also in the development set (repeat) vs new --
+family                            n  system >= MEDIUM  [95% CI]                  HIGH    rule  url_model
+new                            1084   80.2% [ 77.7,  82.4]                      28.8%   73.0%      33.5%
+repeat                          542   74.4% [ 70.5,  77.9]                       8.9%   63.3%      30.1%
+
+== By technique (share flagged >= MEDIUM; 'rule' / 'url_model' = that engine alone) ==
+technique                    n  system [95% CI]          HIGH   rule  model either  class
+embedding_hyphen_suffix     80  100.0% [  95, 100]     100.0% 100.0%  38.8% 100.0%  A
+embedding_subdomain_chain   80  100.0% [  95, 100]     100.0% 100.0%  57.5% 100.0%  A
+idn_homoglyph_mapped         1  100.0% [  21, 100]     100.0% 100.0%   0.0% 100.0%  A  [thin]
+omission                     4  100.0% [  51, 100]       0.0% 100.0%   0.0% 100.0%  A  [thin]
+repetition                   4  100.0% [  51, 100]       0.0% 100.0%  25.0% 100.0%  A  [thin]
+transposition                1  100.0% [  21, 100]       0.0% 100.0% 100.0% 100.0%  A  [thin]
+userinfo_credentials        80  100.0% [  95, 100]     100.0% 100.0%  80.0% 100.0%  A
+ascii_multichar              1  100.0% [  21, 100]       0.0% 100.0%   0.0% 100.0%  B  [thin]
+bitsquat                    68  100.0% [  95, 100]       0.0% 100.0%   7.4% 100.0%  B
+insertion_random            76   89.5% [  81,  95]       2.6%  89.5%   9.2%  89.5%  B
+keyboard_adjacent           68  100.0% [  95, 100]       0.0% 100.0%   4.4% 100.0%  B
+substitution_random         68  100.0% [  95, 100]       0.0% 100.0%   4.4% 100.0%  B
+vowel_swap                  55  100.0% [  93, 100]       0.0% 100.0%   9.1% 100.0%  B
+brand_as_subdomain          80   76.2% [  66,  84]      18.8%  61.2%  37.5%  76.2%  C
+combo_prefix                80   72.5% [  62,  81]      10.0%  56.2%  33.8%  72.5%  C
+combo_suffix                80   73.8% [  63,  82]      12.5%  55.0%  36.2%  73.8%  C
+combo_two_words             80   73.8% [  63,  82]      15.0%  60.0%  30.0%  73.8%  C
+dot_to_hyphen               80   76.2% [  66,  84]      12.5%  68.8%  35.0%  76.2%  C
+fragment_embedding          76  100.0% [  95, 100]      15.8% 100.0%  43.4% 100.0%  C
+path_embedding              76  100.0% [  95, 100]      11.8% 100.0%  53.9% 100.0%  C
+query_embedding             76  100.0% [  95, 100]      28.9% 100.0%  60.5% 100.0%  C
+tld_swap                    69   59.4% [  48,  70]       1.4%  53.6%  10.1%  59.4%  C
+alias_variant               80   38.8% [  29,  50]       6.2%  18.8%  30.0%  38.8%  D
+combo_concat                80   28.8% [  20,  39]       2.5%   6.2%  23.8%  28.8%  D
+fullname_variant            32   50.0% [  34,  66]       9.4%  31.2%  31.2%  50.0%  D
+glued_www                   80   43.8% [  33,  55]       2.5%  22.5%  26.2%  43.8%  D
+idn_homoglyph_unmapped       3   66.7% [  21,  94]       0.0%  66.7%  33.3%  66.7%  D  [thin]
+typo_plus_combo             68   29.4% [  20,  41]       8.8%   0.0%  29.4%  29.4%  D
+
+== By brand (share flagged >= MEDIUM; per brand domain; short brands are a known ceiling) ==
+  aaib.com          short    63.9% [ 52.4,  74.0]  (n=72)
+  amazon.eg         normal   72.3% [ 61.8,  80.8]  (n=83)
+  banquemisr.com    normal   86.0% [ 77.5,  91.6]  (n=93)
+  breadfast.com     normal   91.9% [ 84.1,  96.0]  (n=86)
+  cibeg.com         normal   87.4% [ 78.8,  92.8]  (n=87)
+  digital.gov.eg    normal   67.8% [ 57.6,  76.5]  (n=90)
+  eand.com.eg       short    78.3% [ 68.3,  85.8]  (n=83)
+  egyptair.com      normal   85.2% [ 76.3,  91.2]  (n=88)
+  etisalat.eg       normal   74.4% [ 64.0,  82.6]  (n=82)
+  fawry.com         normal   91.2% [ 83.0,  95.7]  (n=80)
+  instapay.eg       normal   92.9% [ 85.4,  96.7]  (n=85)
+  jumia.com.eg      normal   77.1% [ 67.0,  84.8]  (n=83)
+  nbe.com.eg        short    71.2% [ 60.5,  80.0]  (n=80)
+  noon.com          short    62.7% [ 50.7,  73.3]  (n=67)
+  orange.eg         normal   79.3% [ 69.3,  86.6]  (n=82)
+  qnb.com.eg        short    77.3% [ 66.7,  85.3]  (n=75)
+  qnbalahli.com     normal   88.0% [ 79.8,  93.2]  (n=92)
+  talabat.com       normal   78.6% [ 68.7,  86.0]  (n=84)
+  te.eg             short    44.2% [ 31.6,  57.7]  (n=52)
+  vodafone.com.eg   normal   74.4% [ 64.0,  82.6]  (n=82)
+
+-- by TLD of the look-alike host --
+tld_group                         n  system >= MEDIUM  [95% CI]                  HIGH    rule  url_model
+abuse_in_detector_list          364   75.5% [ 70.9,  79.7]                      25.3%   64.0%      37.6%
+abuse_not_in_detector_list      564   72.2% [ 68.3,  75.7]                      29.3%   62.6%      42.4%
+brand_suffix_or_other           196   99.5% [ 97.2,  99.9]                       1.0%   99.5%       3.1%
+ordinary                        502   78.7% [ 74.9,  82.0]                      20.1%   70.3%      28.7%
+
+-- keyword vocabulary (combo/embedding/typo+combo techniques only) --
+keyword_vocab                     n  system >= MEDIUM  [95% CI]                  HIGH    rule  url_model
+in_detector_vocab               314   78.0% [ 73.1,  82.3]                      33.1%   69.1%      35.4%
+novel                           314   62.1% [ 56.6,  67.3]                      34.7%   42.7%      36.6%
+
+== Attribution: when the rule engine flags a row, does it name the intended brand? ==
+  97.8% [96.8, 98.5]  (1109/1134)   (rows with no rule typosquat match, e.g. URL-pattern flags only, count as wrong)
+
+== Ambiguous rows (may be a real, unrelated organisation; excluded above) ==
+  namesake_label_ordinary_tld    flagged >= MEDIUM 0.0% [0.0, 25.9]  (0/11)  [thin]
+  short_label_collision          flagged >= MEDIUM 0.0% [0.0, 11.0]  (0/31)
+
+== Misses (verdict LOW): up to 5 per technique ==
+  alias_variant (49 missed of 80)
+      http://cibegy.org
+      https://cibegy.boats/wallet/limit
+      https://elahly-bank.online
+      https://banquemisrbank.rest
+      https://bmisr.boats/card/blocked
+  brand_as_subdomain (19 missed of 80)
+      https://nbe.balance-desk.buzz
+      https://nbe.points-pending.mom
+      https://qnb.now-approval.org/ar/verify-code
+      https://aaib.pending-track.buzz
+      https://vodafone.pay.ai/pay/confirm-order
+  combo_concat (57 missed of 80)
+      http://offerscibeg.cyou
+      http://deskcibeg.skin
+      http://nbepay.net/card/blocked
+      https://nbecards.autos
+      http://tasdeeknbe.top
+  combo_prefix (22 missed of 80)
+      http://profile-nbe.top
+      http://approval-nbe.xyz
+      https://settings-qnb.quest
+      https://sms-qnb.beauty
+      http://token-aaib.cfd
+  combo_suffix (21 missed of 80)
+      https://nbe-pin.monster/card/blocked
+      https://nbe-access.org/ar/verify-code
+      http://qnbalahli-pay.tv
+      https://qnbalahli-access.co/session/expired
+      https://qnb-token.beauty
+  combo_two_words (21 missed of 80)
+      http://nbe-review-settings.boats
+      https://qnbalahli-review-code.ai
+      https://qnb-review-coupon.xyz
+      http://qnb-desk-dashboard.xyz
+      https://vodafone-cashback-tasdeek.net/otp/resend
+  dot_to_hyphen (19 missed of 80)
+      https://aaib-com.ai
+      http://aaib-com.mom
+      http://aaib-com.sbs
+      https://vodafone-com-eg.us/ar/verify-code
+      http://orange-eg.tv
+  fullname_variant (16 missed of 32)
+      https://cibcommercialbank.work/pay/confirm-order
+      https://cibcommercialbank.buzz/profile/edit
+      http://cibcommercialbank.net/otp/resend
+      http://cibcommercialbank.beauty
+      https://national-bank-egypt-ahly.com
+  glued_www (45 missed of 80)
+      https://www1-nbe.skin/ar/verify-code
+      http://www1-nbe.cfd
+      https://www-nbe.autos/ar/verify-code
+      https://www1-nbe.xyz
+      http://wwwbanquemisr.tv
+  idn_homoglyph_unmapped (1 missed of 3)
+      https://xn--digitl-fxc.gov.eg
+  insertion_random (8 missed of 76)
+      http://aaieb.com
+      https://aaibw.com
+      http://aaipb.com
+      http://aaitb.com/card/blocked
+      https://anoon.com
+  tld_swap (28 missed of 69)
+      https://nbe.rest/card/blocked
+      http://nbe.beauty/card/blocked
+      https://nbe.boats
+      https://qnb.autos/card/blocked
+      http://qnb.cyou
+  typo_plus_combo (48 missed of 68)
+      http://cibge-ebanking.co
+      http://ciibeg-balance.mom
+      https://cieg-profile.buzz
+      http://banqueemisr-ebanking.top
+      http://banquemmisr-cards.sbs
+
+Reading guide
+ - Report the class table and the per-technique table; never quote one pooled number as 'the' result.
+ - 'repeat' rows reuse a technique name from the development set but with new keywords, aliases and TLDs;
+   'new' rows are techniques the development set never contained.
+ - Genuine rows are constructed and mostly exercise the allowlist; the controls are the false-positive check
+   on real sites, and are small and written from memory.
+ - Do NOT tune on this report. If the rules change after reading it, this set becomes a development set.

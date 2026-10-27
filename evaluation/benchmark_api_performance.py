@@ -7,12 +7,19 @@ dataset directly, unlike every other evaluation script so far. This one
 hits your ACTUALLY RUNNING FastAPI server over real HTTP, the same way a
 real user's browser would, and times it.
 
-REQUIRES: uvicorn running (uvicorn app.main:app --reload, from backend/)
-in a SEPARATE terminal before running this script. Unlike
-calibrate_thresholds.py / evaluate_test_configurations.py /
-evaluate_arabic_breakdown.py, which call engine functions directly and
-therefore only need Postgres running, this script needs the full HTTP
-stack up -- it is testing the stack, not just the engines.
+REQUIRES: the server running in a SEPARATE terminal before running this
+script, started with `python evaluation/serve_for_benchmark.py` (project
+root). That is the normal app with the /analyze rate limit (20/minute)
+switched off in that process; with the limit on, most benchmark requests
+return 429 and this script stops. Leave ETIS_SKIP_WARMUP unset.
+
+UPDATED 2026-10-26: the live text engine is the character TF-IDF model (the
+BiLSTM is no longer in the live path), the URL model is the TLD-masked v2
+artifact, and /analyze is rate limited; earlier reports predate all three. Unlike
+evaluate_final_system.py / evaluate_arabic_breakdown.py, which call
+engine functions directly and therefore only need Postgres running, this
+script needs the full HTTP stack up -- it is testing the stack, not just
+the engines.
 
 Only stdlib is used (urllib, concurrent.futures, statistics) -- no new
 pip install needed. Resource-utilization sampling via psutil is
@@ -202,6 +209,9 @@ def main() -> None:
         for i, payload in enumerate(payloads):
             try:
                 elapsed, status = _post_analyze(payload)
+                if status == 429:
+                    sys.exit("Got HTTP 429 (rate limited): start the server with "
+                             "`python evaluation/serve_for_benchmark.py` instead of plain uvicorn.")
                 if status == 200:
                     lat.append(elapsed)
                 else:
@@ -289,7 +299,11 @@ def main() -> None:
             pass
 
     # --- Report ---
-    lines = ["ETIS -- API Performance Benchmark Report", f"Base URL: {BASE_URL}\n"]
+    import platform
+    lines = ["ETIS -- API Performance Benchmark Report", f"Base URL: {BASE_URL}",
+             f"Run: {time.strftime('%Y-%m-%d %H:%M')}  machine: {platform.platform()}, "
+             f"{platform.processor() or platform.machine()}, {os.cpu_count()} logical CPUs, Python {platform.python_version()}",
+             f"Machine label (ETIS_BENCHMARK_MACHINE): {os.getenv('ETIS_BENCHMARK_MACHINE', 'not set')}\n"]
     lines.append("=== /analyze sequential latency, by input type ===")
     for category in ("url_only", "text_only", "both"):
         stats = summarize(latencies_by_category[category])
