@@ -211,10 +211,10 @@ Copy the example env file:
 - Windows: `copy .env.example .env.local`
 - Mac: `cp .env.example .env.local`
 
-You shouldn't need to edit `.env.local` for local development — `VITE_API_BASE_URL`
-already points at `http://localhost:8000` (your local backend from step 6), and
-`VITE_ETIS_API_KEY` should stay empty (the backend skips the API key check entirely when
-`ETIS_API_KEY` isn't set in its own `.env`, which it won't be for local dev).
+You shouldn't need to edit `.env.local` for local development: `VITE_API_BASE_URL`
+already points at `http://localhost:8000` (your local backend from step 6). Never put a
+secret in this file. Every `VITE_` value ends up in the public page, which is why the
+dashboard no longer has an API key (see "Hosted deployment: authentication" below).
 
 Install dependencies and start the dev server:
 
@@ -242,6 +242,44 @@ at the same time:
    worked).
 
 If any of this fails, see "Common issues" below.
+
+---
+
+## Hosted deployment: authentication
+
+Locally, `ETIS_AUTH_REQUIRED=false` lets every request through. On any hosted copy, turn
+authentication on. There are two kinds of caller:
+
+- **The dashboard (browsers)** gets a signed, HttpOnly session cookie from `POST /session`
+  after an invisible Cloudflare Turnstile bot check. Nothing secret is built into the page.
+- **Programs** (the Gmail extension, scripts) each get their own API key, sent in the
+  `X-API-Key` header. Keys are stored hashed and can be revoked one at a time.
+
+Steps:
+
+1. In the root `.env`, set `ETIS_AUTH_REQUIRED=true` and `ETIS_SESSION_SECRET` (generate it
+   with `py -3.13 -c "import secrets; print(secrets.token_urlsafe(48))"`).
+2. Bot check: create a free Turnstile widget (Cloudflare dashboard, Turnstile, Add widget,
+   with your site's hostname) and put its two keys in `ETIS_TURNSTILE_SITE_KEY` and
+   `ETIS_TURNSTILE_SECRET_KEY`. To try it locally first, use Cloudflare's always-pass test keys
+   listed in `backend/.env.example`.
+3. Serve the dashboard from the API's own address so the cookie is first-party: run
+   `npm run build` in `etis-frontend` with `VITE_API_BASE_URL=` (empty), then set
+   `ETIS_FRONTEND_DIST` to the `dist` folder. Hosts such as `*.onrender.com` treat each
+   subdomain as a separate site, so a dashboard and API on two different subdomains there
+   would not share the cookie.
+4. Keys for programs, from the `backend` folder:
+   ```
+   py -3.13 manage_api_keys.py create gmail-extension
+   py -3.13 manage_api_keys.py list
+   py -3.13 manage_api_keys.py revoke gmail-extension
+   ```
+   `create` prints the key once. Paste it on the extension's Options page.
+5. Behind a reverse proxy, start uvicorn with `--proxy-headers --forwarded-allow-ips=<proxy IP>`
+   so the per-IP rate limits see real client addresses.
+
+The old single `ETIS_API_KEY` is no longer used. If it is still set, the backend refuses to
+start and explains what to do. An empty `ETIS_API_KEY=` line is fine.
 
 ---
 
