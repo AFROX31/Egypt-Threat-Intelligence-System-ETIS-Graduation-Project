@@ -10,6 +10,9 @@ Input   data/raw/real_messages/messages_<initials>.csv   (one file per contribut
         Saved as CSV UTF-8 (a BOM from Excel is handled).
 
 What it does
+  0. CONSENT GATE. A file is skipped unless every contributor in it has a row in
+     data/raw/real_messages/consent_log.csv (contributor, date_consented,
+     form_version, withdrawn). See data/raw/CONSENT_FORM.md.
   1. Validates every row against the guide (allowed label / category / channel /
      language values, label-vs-category consistency, received_in_real_life = yes).
   2. ANONYMISATION CHECK. Rows containing phone numbers, 13+ digit numbers (cards,
@@ -64,6 +67,7 @@ BACKUP_PATH = PROCESSED_DIR / "dataset.pre_ingest.csv"
 META_PATH = PROCESSED_DIR / "real_messages_meta.csv"
 REPORT_PATH = PROCESSED_DIR / "ingest_report.txt"
 REJECTS_PATH = RAW_DIR / "_rejects.csv"  # raw folder is git-ignored; contains text
+CONSENT_LOG_NAME = "consent_log.csv"  # initials + date only; signed forms are kept offline
 
 REQUIRED_COLUMNS = ["text", "label", "category", "channel", "language",
                     "brand", "contributor", "received_in_real_life"]
@@ -204,6 +208,26 @@ def validate_row(row: dict) -> list[str]:
     return problems
 
 
+def read_consent_log(path: Path) -> tuple[set[str], list[str]]:
+    """Initials (upper case) with recorded, not withdrawn consent, plus problems with the log."""
+    if not path.exists():
+        return set(), [f"{path.name} not found: record each contributor's consent first (see data/raw/CONSENT_FORM.md)"]
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        fieldnames = [(n or "").strip().lower() for n in (reader.fieldnames or [])]
+        missing = [c for c in ("contributor", "date_consented", "form_version") if c not in fieldnames]
+        if missing:
+            return set(), [f"{path.name}: missing column(s): {', '.join(missing)}"]
+        reader.fieldnames = fieldnames
+        consented = set()
+        for row in reader:
+            initials = (row.get("contributor") or "").strip().upper()
+            withdrawn = (row.get("withdrawn") or "").strip().lower() in {"yes", "y", "true", "1"}
+            if initials and (row.get("date_consented") or "").strip() and not withdrawn:
+                consented.add(initials)
+    return consented, []
+
+
 def message_id(text: str) -> str:
     return "RM-" + hashlib.sha1(normalise_text_key(text).encode("utf-8")).hexdigest()[:10].upper()
 
@@ -236,8 +260,15 @@ def main() -> None:
     def note(rule: str, where: str) -> None:
         listing.setdefault(rule, []).append(where)
 
+    consented, consent_problems = read_consent_log(args.input_dir / CONSENT_LOG_NAME)
+    file_problems += consent_problems
+
     for path in files:
         rows, problems = read_contributor_file(path)
+        if not problems:
+            no_consent = sorted({r["contributor"].upper() for r in rows if r["contributor"]} - consented)
+            if no_consent:
+                problems = [f"no recorded consent for contributor(s) {', '.join(no_consent)}"]
         if problems:
             file_problems += [f"{path.name}: {p}" for p in problems]
             continue

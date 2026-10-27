@@ -6,6 +6,8 @@ has almost no real legitimate bank / wallet / delivery / OTP messages, so the mo
 
 ## Rules
 
+0. **Consent first.** Read and agree to `CONSENT_FORM.md` (sign it or reply "I agree") before you
+   send anything. Files from contributors without recorded consent are not used.
 1. **Only your own messages**, or messages from people who have said yes. Nothing from groups
    or other people's chats.
 2. **Anonymise before you save.** Replace, do not delete the sentence:
@@ -49,8 +51,21 @@ Columns:
 - `contributor` – your initials
 - `received_in_real_life` – `yes` (everything here should be yes)
 
-Save as **CSV UTF-8** (Excel: Save As -> CSV UTF-8). Send the file to Mido, do not commit it
-to a public repo.
+Save as **CSV UTF-8** (Excel: Save As -> CSV UTF-8). Send the file only to the collector named
+on your consent form, privately. Never post it in a group or commit it to a repo.
+
+## Anonymiser (for the collector)
+
+The collector runs `data/scripts/anonymise_messages.py` on every file as a second pass, even if
+the contributor already anonymised it. Save the file as `data/raw/real_messages/raw_<initials>.csv`
+and run:
+
+    python data/scripts/anonymise_messages.py data/raw/real_messages/raw_<initials>.csv --names "First Last,الاسم"
+
+It writes `messages_<initials>.csv` (replaced phones, e-mails, card/account/ID numbers, last-4
+digits, amounts, OTP codes, reference numbers, personal links, listed names and names after a
+greeting) and `_review_<initials>.csv` with before/after for each changed row. It cannot find every
+name or address: read the review file, fix what it missed, then **delete `raw_<initials>.csv`**.
 
 ## Checklist before sending
 
